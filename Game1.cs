@@ -43,6 +43,7 @@ namespace AjedrezMonogame {
             teclas.Add(Keys.Down, new InfoTecla((posicion) => posicion.Abajo()));
             teclas.Add(Keys.Enter, new InfoTecla((posicion) => tablero.Seleccionar()));
             teclas.Add(Keys.Space, new InfoTecla((posicion) => tablero.QuitarSeleccion()));
+            teclas.Add(Keys.Tab, new InfoTecla((posicion) => tablero.Retroceder()));
         }
 
         protected override void LoadContent() {

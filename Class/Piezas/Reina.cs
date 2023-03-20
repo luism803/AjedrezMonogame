@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace AjedrezMonogame.Class.Piezas {
     internal class Reina : Pieza {
         public Reina(Texture2D tileset, int lado) : base(1, lado, tileset) { }
-        public override List<Posicion> CalcularJugadas(Tablero tablero, Posicion pos) {
+        public override List<Posicion> CalcularJugadas(Tablero tablero, Posicion pos, bool comprobar) {
             jugadas = new List<Posicion>();
             Posicion newJugada = new Posicion();
             /*ARRIBA*/
@@ -51,7 +51,12 @@ namespace AjedrezMonogame.Class.Piezas {
                 newJugada.X--;
                 newJugada.Y--;
             }
+            if (comprobar)
+                ComprobarJugadas(tablero, pos);
             return jugadas;
+        }
+        public override Pieza Clone() {
+            return new Reina(tileset, lado);
         }
     }
 }

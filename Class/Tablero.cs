@@ -2,14 +2,28 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AjedrezMonogame.Class {
     internal class Tablero {
+        public struct RegistroJugada {
+            public Posicion o; //origen
+            public Pieza fichaOrigen;
+            public Posicion f; //destino
+            public Pieza fichaFin;
+            public RegistroJugada(Posicion o, Posicion f, Pieza fichaOrigen, Pieza fichaFin) {
+                this.o = o;
+                this.f = f;
+                this.fichaOrigen = fichaOrigen;
+                this.fichaFin = fichaFin;
+            }
+        }
         public Posicion Puntero { get; set; }
         private Posicion seleccion;
         private List<Posicion> jugadas;
         private Casilla[,] casillas;
         private Casilla casillaSeleccion;
+        private List<RegistroJugada> registro;
         public Tablero(GraphicsDevice graphicsDevice, Posicion puntero, Texture2D tileset) {
             this.Puntero = puntero;
             casillas = new Casilla[8, 8];
@@ -30,6 +44,7 @@ namespace AjedrezMonogame.Class {
             ColocarPiezas(tileset);
             seleccion = null;
             casillaSeleccion = null;
+            registro = new List<RegistroJugada>();
         }
         public Tablero(GraphicsDevice graphicsDevice, Texture2D tileset)
             : this(graphicsDevice, new Posicion(), tileset) { }
@@ -39,7 +54,7 @@ namespace AjedrezMonogame.Class {
             //seleccionar
             if (seleccion != null) {
                 if (casillas[seleccion.X, seleccion.Y].Ficha != null) { //si hay ficha
-                    jugadas = casillas[seleccion.X, seleccion.Y].Ficha.CalcularJugadas(this, seleccion);
+                    jugadas = casillas[seleccion.X, seleccion.Y].Ficha.CalcularJugadas(this, seleccion, true);
                 }
             }
             foreach (var casilla in casillas) {
@@ -99,9 +114,37 @@ namespace AjedrezMonogame.Class {
             casillaSeleccion = null;
         }
         private void MoverPieza() {
+            //guardar
+            Pieza origen = null;
+            if (casillas[seleccion.X, seleccion.Y].Ficha != null)
+                origen = casillas[seleccion.X, seleccion.Y].Ficha.Clone();
+            Pieza final = null;
+            if (casillas[Puntero.X, Puntero.Y].Ficha != null)
+                final = casillas[Puntero.X, Puntero.Y].Ficha.Clone();
+            registro.Add(new RegistroJugada(seleccion.Clone, Puntero.Clone,
+                    origen,
+                    final
+                )
+            );
             casillas[Puntero.X, Puntero.Y].Ficha = casillaSeleccion.Ficha;
             casillaSeleccion.Ficha = null;
             QuitarSeleccion();
+        }
+        public void MoverPieza(Posicion fin, Posicion ori) {
+            //guardar
+            Pieza origen = null;
+            if (casillas[ori.X, ori.Y].Ficha != null)
+                origen = casillas[ori.X, ori.Y].Ficha.Clone();
+            Pieza final = null;
+            if (casillas[fin.X, fin.Y].Ficha != null)
+                final = casillas[fin.X, fin.Y].Ficha.Clone();
+            registro.Add(new RegistroJugada(ori.Clone, fin.Clone,
+                    origen,
+                    final
+                )
+            );
+            casillas[fin.X, fin.Y].Ficha = origen;
+            casillas[ori.X, ori.Y].Ficha = null;
         }
         private bool IsInside(Posicion pos) {
             return pos.X >= 0 && pos.X <= 7 &&
@@ -113,6 +156,35 @@ namespace AjedrezMonogame.Class {
         public bool IsEnemy(Posicion pos, int lado) {
             return IsInside(pos) && casillas[pos.X, pos.Y].Ficha != null &&
             casillas[pos.X, pos.Y].Ficha.Lado != lado;
+        }
+        public bool IsInJaque(int lado) {
+            Posicion posRey = GetRey(lado);
+            List<Posicion> jugadas = new List<Posicion>();
+            foreach (Casilla casilla in casillas)
+                if (IsEnemy(casilla.Pos, lado))
+                    jugadas.AddRange(casilla.Ficha.CalcularJugadas(this, casilla.Pos, false));
+            //coger todas las jugadas de las casillas enemigas y comprobar que el rey no esta en ellas
+            return jugadas.Exists(j => j.Equals(posRey));
+        }
+        private Posicion GetRey(int lado) {
+            foreach (Casilla casilla in casillas)
+                if (!IsEnemy(casilla.Pos, lado) && casilla.Ficha is Rey)
+                    return casilla.Pos;
+            return null;
+        }
+        public void Retroceder() {
+            if (registro.Count > 0) {
+                RegistroJugada registroJugada = registro.Last();
+                //Debug.WriteLine(registroJugada.o.X + "\t" + registroJugada.o.Y + "\n" + registroJugada.f.X + "\t" + registroJugada.f.Y);
+                //seleccion = null;
+                //Puntero = registroJugada.f;
+                //Seleccionar();
+                //Puntero = registroJugada.o;
+                //MoverPieza(false);
+                casillas[registroJugada.o.X, registroJugada.o.Y].Ficha = registroJugada.fichaOrigen;
+                casillas[registroJugada.f.X, registroJugada.f.Y].Ficha = registroJugada.fichaFin;
+                registro.RemoveAt(registro.Count - 1);
+            }
         }
     }
 }
