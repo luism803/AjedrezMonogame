@@ -1,10 +1,10 @@
-﻿using Microsoft.Xna.Framework;
+﻿using AjedrezMonogame.Class;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Pong.Class;
 using System;
 using System.Collections.Generic;
-namespace Pong {
+namespace AjedrezMonogame {
     public class Game1 : Game {
         public struct InfoTecla {
             public float TiempoPulsacion;

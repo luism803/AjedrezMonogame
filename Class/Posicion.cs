@@ -1,4 +1,4 @@
-﻿namespace Pong.Class {
+﻿namespace AjedrezMonogame.Class {
     public class Posicion {
         public Posicion Clone {
             get { return new Posicion(X, Y); }

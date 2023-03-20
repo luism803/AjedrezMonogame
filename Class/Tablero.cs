@@ -1,8 +1,9 @@
-﻿using Microsoft.Xna.Framework;
+﻿using AjedrezMonogame.Class.Piezas;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 
-namespace Pong.Class {
+namespace AjedrezMonogame.Class {
     internal class Tablero {
         public Posicion Puntero { get; set; }
         private Posicion seleccion;
@@ -64,6 +65,26 @@ namespace Pong.Class {
             //torres negras
             casillas[7, 0].Ficha = new Torre(tileset, 1);
             casillas[0, 0].Ficha = new Torre(tileset, 1);
+            //alfiles blancos
+            casillas[2, 7].Ficha = new Alfil(tileset, 0);
+            casillas[5, 7].Ficha = new Alfil(tileset, 0);
+            //alfiles negros
+            casillas[2, 0].Ficha = new Alfil(tileset, 1);
+            casillas[5, 0].Ficha = new Alfil(tileset, 1);
+            //caballos blancos
+            casillas[1, 7].Ficha = new Caballo(tileset, 0);
+            casillas[6, 7].Ficha = new Caballo(tileset, 0);
+            //caballos negros
+            casillas[1, 0].Ficha = new Caballo(tileset, 1);
+            casillas[6, 0].Ficha = new Caballo(tileset, 1);
+            //reina blanca
+            casillas[3, 7].Ficha = new Reina(tileset, 0);
+            //reina negra
+            casillas[3, 0].Ficha = new Reina(tileset, 1);
+            //rey blanco
+            casillas[4, 7].Ficha = new Rey(tileset, 0);
+            //rey negro
+            casillas[4, 0].Ficha = new Rey(tileset, 1);
         }
         public void Seleccionar() {
             if (casillaSeleccion == null) { //no hay seleccion

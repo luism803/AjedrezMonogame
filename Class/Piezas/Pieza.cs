@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 
-namespace Pong.Class {
+namespace AjedrezMonogame.Class.Piezas {
     internal abstract class Pieza {
         protected int pieza;
         protected int lado;
@@ -10,8 +10,8 @@ namespace Pong.Class {
         public int Lado { get { return lado; } }
         protected Texture2D tileset;
         protected Pieza(int p, int l, Texture2D tileset) {
-            this.pieza = p;
-            this.lado = l;
+            pieza = p;
+            lado = l;
             this.tileset = tileset;
         }
         public void Draw(SpriteBatch spriteBatch, int x, int y) {

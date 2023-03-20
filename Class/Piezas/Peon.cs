@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 
-namespace Pong.Class {
+namespace AjedrezMonogame.Class.Piezas {
     internal class Peon : Pieza {
         public Peon(Texture2D tileset, int lado) : base(5, lado, tileset) { }
         public override List<Posicion> CalcularJugadas(Tablero tablero, Posicion pos) {
