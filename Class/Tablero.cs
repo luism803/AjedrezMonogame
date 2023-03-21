@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace AjedrezMonogame.Class {
@@ -9,7 +10,7 @@ namespace AjedrezMonogame.Class {
         public struct RegistroJugada {
             public Posicion o; //origen
             public Pieza fichaOrigen;
-            public Posicion f; //destino
+            public Posicion f; //final
             public Pieza fichaFin;
             public RegistroJugada(Posicion o, Posicion f, Pieza fichaOrigen, Pieza fichaFin) {
                 this.o = o;
@@ -51,21 +52,23 @@ namespace AjedrezMonogame.Class {
         public Tablero(GraphicsDevice graphicsDevice, Texture2D tileset)
             : this(graphicsDevice, new Posicion(), tileset) { }
         public void Update(Posicion puntero) {
-            jugadas.Clear();
-            this.Puntero = puntero;
-            //seleccionar
-            if (seleccion != null) {
-                if (casillas[seleccion.X, seleccion.Y].Ficha != null) { //si hay ficha
-                    jugadas = casillas[seleccion.X, seleccion.Y].Ficha.CalcularJugadas(this, seleccion, true);
+            jugadas.Clear();    //vaciar las jugadas posibles
+            this.Puntero = puntero; //actualizar Puntero
+            //SELECCIONAR
+            if (seleccion != null) {    //si hay seleccionada una casilla
+                if (casillas[seleccion.X, seleccion.Y].Ficha != null) { //si hay una ficha en la casilla seleccionada
+                    jugadas = casillas[seleccion.X, seleccion.Y].Ficha.CalcularJugadas(this, seleccion, true);  //guardar las jugadas posibles de esa jugada
                 }
             }
-            foreach (var casilla in casillas) {
-                casilla.Puntero = casilla.Pos.Equals(puntero);
-                casilla.Seleccion = casilla.Pos.Equals(seleccion);
-                casilla.Jugada = jugadas.Exists((j) => casilla.Pos.Equals(j));
+            foreach (var casilla in casillas) { //actualizar los colores de las casillas
+                casilla.Puntero = casilla.Pos.Equals(puntero);  //si la casilla esta siendo apuntada
+                casilla.Seleccion = casilla.Pos.Equals(seleccion);  //si la casilla esta sinedo seleccionada
+                casilla.Jugada = jugadas.Exists((j) => casilla.Pos.Equals(j));  //si la casilla es una jugada posible
             }
+            if (jugadasPosibles(0).Count == 0)
+                Debug.WriteLine("Fin para las blancas");
         }
-        public void Draw(SpriteBatch _spriteBatch) {
+        public void Draw(SpriteBatch _spriteBatch) {    //dibujar todas las casillas
             foreach (Casilla casilla in casillas)
                 casilla.Draw(_spriteBatch);
         }
@@ -104,11 +107,11 @@ namespace AjedrezMonogame.Class {
             casillas[4, 0].Ficha = new Rey(tileset, 1);
         }
         public void Seleccionar() {
-            if (casillaSeleccion == null) { //no hay seleccion
-                seleccion = Puntero.Clone;
-                casillaSeleccion = casillas[seleccion.X, seleccion.Y];
-            } else if (jugadas.Exists((j) => Puntero.Equals(j))) { //se apunta hacia una casilla que es una jugada
-                MoverPieza();
+            if (casillaSeleccion == null) { //si no hay seleccion
+                seleccion = Puntero.Clone;  //actualizar la seleccion (Posicion)
+                casillaSeleccion = casillas[seleccion.X, seleccion.Y];  //actualizar la casilla de seleccion
+            } else if (jugadas.Exists((j) => Puntero.Equals(j))) { //si se apunta hacia una casilla que es una jugada
+                MoverPieza();   //mover la pieza seleecionada hacia la casilla apuntada
             }
         }
         public void QuitarSeleccion() {
@@ -116,7 +119,7 @@ namespace AjedrezMonogame.Class {
             casillaSeleccion = null;
         }
         private void MoverPieza() {
-            //guardar
+            //GUARDAR JUGADA EN EL REGISTRO
             RegistroJugada registroJugada = new RegistroJugada();
             Pieza origen = null;
             if (casillas[seleccion.X, seleccion.Y].Ficha != null)
@@ -128,18 +131,18 @@ namespace AjedrezMonogame.Class {
                     origen,
                     final);
             registro.Add(registroJugada);
-            //comprobar peon pasado
+            //PEON PASADO
             if (registroJugada.fichaOrigen is Peon && registroJugada.fichaFin == null
-                && registroJugada.o.X != registroJugada.f.X)
-                casillas[registroJugada.f.X, registroJugada.o.Y].Ficha = null;
-            //mover
-            casillas[Puntero.X, Puntero.Y].Ficha = casillaSeleccion.Ficha;
-            casillaSeleccion.Ficha = null;
+                && registroJugada.o.X != registroJugada.f.X)    //si el peon esta comiendo un peon pasado
+                casillas[registroJugada.f.X, registroJugada.o.Y].Ficha = null;  //quitar el peon comido
+            //MOVER
+            casillas[Puntero.X, Puntero.Y].Ficha = casillaSeleccion.Ficha;  //poner la ficha seleccionada en la casilla apuntada
+            casillaSeleccion.Ficha = null;  //quitar la ficha de la casilla seleccionada
             QuitarSeleccion();
         }
         public void MoverPieza(Posicion fin, Posicion ori) {
+            //GUARDAR JUGADA EN EL REGISTRO
             RegistroJugada registroJugada = new RegistroJugada();
-            //guardar
             Pieza origen = null;
             if (casillas[ori.X, ori.Y].Ficha != null)
                 origen = casillas[ori.X, ori.Y].Ficha.Clone();
@@ -151,10 +154,11 @@ namespace AjedrezMonogame.Class {
                     final
                 );
             registro.Add(registroJugada);
-            //comprobar peon pasado
+            //PEON PASADO
             if (registroJugada.fichaOrigen is Peon && registroJugada.fichaFin == null
-                && registroJugada.o.X != registroJugada.f.X)
-                casillas[registroJugada.f.X, registroJugada.o.Y].Ficha = null;
+                && registroJugada.o.X != registroJugada.f.X)    //si el peon esta comiendo un peon pasado
+                casillas[registroJugada.f.X, registroJugada.o.Y].Ficha = null;  //quitar el peon comido
+            //MOVER
             casillas[fin.X, fin.Y].Ficha = origen;
             casillas[ori.X, ori.Y].Ficha = null;
         }
@@ -169,14 +173,23 @@ namespace AjedrezMonogame.Class {
             return IsInside(pos) && casillas[pos.X, pos.Y].Ficha != null &&
             casillas[pos.X, pos.Y].Ficha.Lado != lado;
         }
-        public bool IsInJaque(int lado) {//sacar funcion
-            Posicion posRey = GetRey(lado);
+        private List<Posicion> jugadasPosibles(int lado) {
+            List<Posicion> jugadas = new List<Posicion>();
+            foreach (Casilla casilla in casillas)
+                if (IsEnemy(casilla.Pos, -lado + 1))
+                    jugadas.AddRange(casilla.Ficha.CalcularJugadas(this, casilla.Pos, true));
+            return jugadas;
+        }
+        public bool IsAtacada(Posicion pos, int lado) {
             List<Posicion> jugadas = new List<Posicion>();
             foreach (Casilla casilla in casillas)
                 if (IsEnemy(casilla.Pos, lado))
                     jugadas.AddRange(casilla.Ficha.CalcularJugadas(this, casilla.Pos, false));
             //coger todas las jugadas de las casillas enemigas y comprobar que el rey no esta en ellas
-            return jugadas.Exists(j => j.Equals(posRey));
+            return jugadas.Exists(j => j.Equals(pos));
+        }
+        public bool IsInJaque(int lado) {//sacar funcion
+            return IsAtacada(GetRey(lado), lado);
         }
         private Posicion GetRey(int lado) {
             foreach (Casilla casilla in casillas)

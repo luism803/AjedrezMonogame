@@ -16,8 +16,8 @@ namespace AjedrezMonogame.Class.Piezas {
         }
         public void Draw(SpriteBatch spriteBatch, int x, int y) {
 
-            int tileWidth = tileset.Width / 6; // Width of each tile in pixels
-            int tileHeight = tileset.Height / 2; // Height of each tile in pixels
+            int tileWidth = tileset.Width / 6;
+            int tileHeight = tileset.Height / 2;
             Rectangle tileSourceRect = new Rectangle(
                 pieza * tileWidth,
                 lado * tileHeight,
