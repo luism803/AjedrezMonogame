@@ -35,8 +35,6 @@ namespace AjedrezMonogame {
 
         protected override void Initialize() {
             // TODO: Add your initialization logic here
-
-            base.Initialize();
             teclas.Add(Keys.Left, new InfoTecla((posicion) => posicion.Izquierda()));
             teclas.Add(Keys.Right, new InfoTecla((posicion) => posicion.Derecha()));
             teclas.Add(Keys.Up, new InfoTecla((posicion) => posicion.Arriba()));
@@ -44,6 +42,12 @@ namespace AjedrezMonogame {
             teclas.Add(Keys.Enter, new InfoTecla((posicion) => tablero.Seleccionar()));
             teclas.Add(Keys.Space, new InfoTecla((posicion) => tablero.QuitarSeleccion()));
             teclas.Add(Keys.Tab, new InfoTecla((posicion) => tablero.Retroceder()));
+
+            _graphics.PreferredBackBufferWidth = (int)(_graphics.GraphicsDevice.DisplayMode.Width * 0.75);
+            _graphics.PreferredBackBufferHeight = (int)(_graphics.GraphicsDevice.DisplayMode.Height * 0.75);
+            _graphics.ApplyChanges();
+
+            base.Initialize();
         }
 
         protected override void LoadContent() {

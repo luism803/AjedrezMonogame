@@ -1,8 +1,8 @@
 ﻿using AjedrezMonogame.Class.Piezas;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace AjedrezMonogame.Class {
@@ -65,8 +65,8 @@ namespace AjedrezMonogame.Class {
                 casilla.Seleccion = casilla.Pos.Equals(seleccion);  //si la casilla esta sinedo seleccionada
                 casilla.Jugada = jugadas.Exists((j) => casilla.Pos.Equals(j));  //si la casilla es una jugada posible
             }
-            if (jugadasPosibles(0).Count == 0)
-                Debug.WriteLine("Fin para las blancas");
+            //if (jugadasPosibles(0).Count == 0)
+            //    Debug.WriteLine("Fin para las blancas");
         }
         public void Draw(SpriteBatch _spriteBatch) {    //dibujar todas las casillas
             foreach (Casilla casilla in casillas)
@@ -118,35 +118,17 @@ namespace AjedrezMonogame.Class {
             seleccion = null;
             casillaSeleccion = null;
         }
-        private void MoverPieza() {
-            //GUARDAR JUGADA EN EL REGISTRO
-            RegistroJugada registroJugada = new RegistroJugada();
-            Pieza origen = null;
-            if (casillas[seleccion.X, seleccion.Y].Ficha != null)
-                origen = casillas[seleccion.X, seleccion.Y].Ficha.Clone();
-            Pieza final = null;
-            if (casillas[Puntero.X, Puntero.Y].Ficha != null)
-                final = casillas[Puntero.X, Puntero.Y].Ficha.Clone();
-            registroJugada = new RegistroJugada(seleccion.Clone, Puntero.Clone,
-                    origen,
-                    final);
-            registro.Add(registroJugada);
-            //PEON PASADO
-            if (registroJugada.fichaOrigen is Peon && registroJugada.fichaFin == null
-                && registroJugada.o.X != registroJugada.f.X)    //si el peon esta comiendo un peon pasado
-                casillas[registroJugada.f.X, registroJugada.o.Y].Ficha = null;  //quitar el peon comido
-            //MOVER
-            casillas[Puntero.X, Puntero.Y].Ficha = casillaSeleccion.Ficha;  //poner la ficha seleccionada en la casilla apuntada
-            casillaSeleccion.Ficha = null;  //quitar la ficha de la casilla seleccionada
+        private void MoverPieza() { //se puede llamar a la funion copia
+            MoverPieza(Puntero, seleccion);
             QuitarSeleccion();
         }
         public void MoverPieza(Posicion fin, Posicion ori) {
             //GUARDAR JUGADA EN EL REGISTRO
-            RegistroJugada registroJugada = new RegistroJugada();
+            RegistroJugada registroJugada;
             Pieza origen = null;
+            Pieza final = null;
             if (casillas[ori.X, ori.Y].Ficha != null)
                 origen = casillas[ori.X, ori.Y].Ficha.Clone();
-            Pieza final = null;
             if (casillas[fin.X, fin.Y].Ficha != null)
                 final = casillas[fin.X, fin.Y].Ficha.Clone();
             registroJugada = new RegistroJugada(ori.Clone, fin.Clone,
@@ -158,6 +140,19 @@ namespace AjedrezMonogame.Class {
             if (registroJugada.fichaOrigen is Peon && registroJugada.fichaFin == null
                 && registroJugada.o.X != registroJugada.f.X)    //si el peon esta comiendo un peon pasado
                 casillas[registroJugada.f.X, registroJugada.o.Y].Ficha = null;  //quitar el peon comido
+            //ENROQUE
+            if (registroJugada.fichaOrigen is Rey && Math.Abs(registroJugada.o.X - registroJugada.f.X) == 2) {
+                //DERECHA
+                if (registroJugada.o.X - registroJugada.f.X < 0) {
+                    casillas[registroJugada.f.X + 1, registroJugada.f.Y].Ficha = null;
+                    casillas[registroJugada.f.X - 1, registroJugada.f.Y].Ficha = new Torre(tileset, registroJugada.fichaOrigen.Lado);
+                }
+                //IZQUIERDA
+                else {
+                    casillas[registroJugada.f.X - 2, registroJugada.f.Y].Ficha = null;
+                    casillas[registroJugada.f.X + 1, registroJugada.f.Y].Ficha = new Torre(tileset, registroJugada.fichaOrigen.Lado);
+                }
+            }
             //MOVER
             casillas[fin.X, fin.Y].Ficha = origen;
             casillas[ori.X, ori.Y].Ficha = null;
@@ -203,18 +198,34 @@ namespace AjedrezMonogame.Class {
                 casillas[registroJugada.o.X, registroJugada.o.Y].Ficha = registroJugada.fichaOrigen;
                 casillas[registroJugada.f.X, registroJugada.f.Y].Ficha = registroJugada.fichaFin;
                 registro.RemoveAt(registro.Count - 1);
-                //si hubo peon pasado
+                //SI HUBO PEON PASADO
                 if (registroJugada.fichaOrigen is Peon && registroJugada.fichaFin == null
                 && registroJugada.o.X != registroJugada.f.X)
                     casillas[registroJugada.f.X, registroJugada.o.Y].Ficha = new Peon(tileset, registroJugada.fichaOrigen.Lado * (-1) + 1);
+                //SI HUBO ENROQUE
+                if (registroJugada.fichaOrigen is Rey && Math.Abs(registroJugada.o.X - registroJugada.f.X) == 2) {
+                    //DERECHA
+                    if (registroJugada.o.X - registroJugada.f.X < 0) {
+                        casillas[registroJugada.f.X + 1, registroJugada.f.Y].Ficha = new Torre(tileset, registroJugada.fichaOrigen.Lado);
+                        casillas[registroJugada.f.X - 1, registroJugada.f.Y].Ficha = null;
+                    }
+                    //IZQUIERDA
+                    else {
+                        casillas[registroJugada.f.X - 2, registroJugada.f.Y].Ficha = new Torre(tileset, registroJugada.fichaOrigen.Lado);
+                        casillas[registroJugada.f.X + 1, registroJugada.f.Y].Ficha = null;
+                    }
+                }
             }
         }
         public bool IsPeon(Posicion pos) {
-            return casillas[pos.X, pos.Y].Ficha is Peon;
+            return IsInside(pos) && casillas[pos.X, pos.Y].Ficha is Peon;
         }
         public bool IsLastJugada(Posicion origen, Posicion final) {
             RegistroJugada registroJugada = registro.Last();
             return registroJugada.o.Equals(origen) && registroJugada.f.Equals(final);
+        }
+        public bool WasMoved(Posicion pos) {
+            return registro.Exists(r => r.o.Equals(pos));
         }
     }
 }
