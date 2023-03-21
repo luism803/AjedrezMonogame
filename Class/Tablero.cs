@@ -24,6 +24,7 @@ namespace AjedrezMonogame.Class {
         private Casilla[,] casillas;
         private Casilla casillaSeleccion;
         private List<RegistroJugada> registro;
+        private Texture2D tileset;
         public Tablero(GraphicsDevice graphicsDevice, Posicion puntero, Texture2D tileset) {
             this.Puntero = puntero;
             casillas = new Casilla[8, 8];
@@ -45,6 +46,7 @@ namespace AjedrezMonogame.Class {
             seleccion = null;
             casillaSeleccion = null;
             registro = new List<RegistroJugada>();
+            this.tileset = tileset;
         }
         public Tablero(GraphicsDevice graphicsDevice, Texture2D tileset)
             : this(graphicsDevice, new Posicion(), tileset) { }
@@ -115,22 +117,28 @@ namespace AjedrezMonogame.Class {
         }
         private void MoverPieza() {
             //guardar
+            RegistroJugada registroJugada = new RegistroJugada();
             Pieza origen = null;
             if (casillas[seleccion.X, seleccion.Y].Ficha != null)
                 origen = casillas[seleccion.X, seleccion.Y].Ficha.Clone();
             Pieza final = null;
             if (casillas[Puntero.X, Puntero.Y].Ficha != null)
                 final = casillas[Puntero.X, Puntero.Y].Ficha.Clone();
-            registro.Add(new RegistroJugada(seleccion.Clone, Puntero.Clone,
+            registroJugada = new RegistroJugada(seleccion.Clone, Puntero.Clone,
                     origen,
-                    final
-                )
-            );
+                    final);
+            registro.Add(registroJugada);
+            //comprobar peon pasado
+            if (registroJugada.fichaOrigen is Peon && registroJugada.fichaFin == null
+                && registroJugada.o.X != registroJugada.f.X)
+                casillas[registroJugada.f.X, registroJugada.o.Y].Ficha = null;
+            //mover
             casillas[Puntero.X, Puntero.Y].Ficha = casillaSeleccion.Ficha;
             casillaSeleccion.Ficha = null;
             QuitarSeleccion();
         }
         public void MoverPieza(Posicion fin, Posicion ori) {
+            RegistroJugada registroJugada = new RegistroJugada();
             //guardar
             Pieza origen = null;
             if (casillas[ori.X, ori.Y].Ficha != null)
@@ -138,11 +146,15 @@ namespace AjedrezMonogame.Class {
             Pieza final = null;
             if (casillas[fin.X, fin.Y].Ficha != null)
                 final = casillas[fin.X, fin.Y].Ficha.Clone();
-            registro.Add(new RegistroJugada(ori.Clone, fin.Clone,
+            registroJugada = new RegistroJugada(ori.Clone, fin.Clone,
                     origen,
                     final
-                )
-            );
+                );
+            registro.Add(registroJugada);
+            //comprobar peon pasado
+            if (registroJugada.fichaOrigen is Peon && registroJugada.fichaFin == null
+                && registroJugada.o.X != registroJugada.f.X)
+                casillas[registroJugada.f.X, registroJugada.o.Y].Ficha = null;
             casillas[fin.X, fin.Y].Ficha = origen;
             casillas[ori.X, ori.Y].Ficha = null;
         }
@@ -157,7 +169,7 @@ namespace AjedrezMonogame.Class {
             return IsInside(pos) && casillas[pos.X, pos.Y].Ficha != null &&
             casillas[pos.X, pos.Y].Ficha.Lado != lado;
         }
-        public bool IsInJaque(int lado) {
+        public bool IsInJaque(int lado) {//sacar funcion
             Posicion posRey = GetRey(lado);
             List<Posicion> jugadas = new List<Posicion>();
             foreach (Casilla casilla in casillas)
@@ -175,16 +187,21 @@ namespace AjedrezMonogame.Class {
         public void Retroceder() {
             if (registro.Count > 0) {
                 RegistroJugada registroJugada = registro.Last();
-                //Debug.WriteLine(registroJugada.o.X + "\t" + registroJugada.o.Y + "\n" + registroJugada.f.X + "\t" + registroJugada.f.Y);
-                //seleccion = null;
-                //Puntero = registroJugada.f;
-                //Seleccionar();
-                //Puntero = registroJugada.o;
-                //MoverPieza(false);
                 casillas[registroJugada.o.X, registroJugada.o.Y].Ficha = registroJugada.fichaOrigen;
                 casillas[registroJugada.f.X, registroJugada.f.Y].Ficha = registroJugada.fichaFin;
                 registro.RemoveAt(registro.Count - 1);
+                //si hubo peon pasado
+                if (registroJugada.fichaOrigen is Peon && registroJugada.fichaFin == null
+                && registroJugada.o.X != registroJugada.f.X)
+                    casillas[registroJugada.f.X, registroJugada.o.Y].Ficha = new Peon(tileset, registroJugada.fichaOrigen.Lado * (-1) + 1);
             }
+        }
+        public bool IsPeon(Posicion pos) {
+            return casillas[pos.X, pos.Y].Ficha is Peon;
+        }
+        public bool IsLastJugada(Posicion origen, Posicion final) {
+            RegistroJugada registroJugada = registro.Last();
+            return registroJugada.o.Equals(origen) && registroJugada.f.Equals(final);
         }
     }
 }

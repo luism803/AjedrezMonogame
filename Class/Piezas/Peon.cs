@@ -33,6 +33,16 @@ namespace AjedrezMonogame.Class.Piezas {
         private void AnyadirAtaque(Tablero tablero, Posicion pos) {
             if (tablero.IsEnemy(pos, lado))
                 jugadas.Add(pos.Clone);
+            if (lado == 0) {
+                if (pos.Y == 2 && tablero.IsPeon(new Posicion(pos.X, pos.Y + 1))
+                    && tablero.IsLastJugada(new Posicion(pos.X, pos.Y - 1), new Posicion(pos.X, pos.Y + 1)))
+                    jugadas.Add(pos.Clone);
+            }
+            if (lado == 1) {
+                if (pos.Y == 5 && tablero.IsPeon(new Posicion(pos.X, pos.Y - 1))
+                    && tablero.IsLastJugada(new Posicion(pos.X, pos.Y + 1), new Posicion(pos.X, pos.Y - 1)))
+                    jugadas.Add(pos.Clone);
+            }
         }
         public override Pieza Clone() {
             return new Peon(tileset, lado);
