@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace AjedrezMonogame.Class {
@@ -65,8 +66,14 @@ namespace AjedrezMonogame.Class {
                 casilla.Seleccion = casilla.Pos.Equals(seleccion);  //si la casilla esta sinedo seleccionada
                 casilla.Jugada = jugadas.Exists((j) => casilla.Pos.Equals(j));  //si la casilla es una jugada posible
             }
-            //if (jugadasPosibles(0).Count == 0)
-            //    Debug.WriteLine("Fin para las blancas");
+            if (PeonCoronando() != null)
+                Debug.WriteLine("hay coranacion");
+        }
+        private Posicion PeonCoronando() {
+            foreach (Casilla casilla in casillas)
+                if (casilla.Ficha is Peon && (casilla.Pos.Y == 0 || casilla.Pos.Y == 7))
+                    return casilla.Pos;
+            return null;
         }
         public void Draw(SpriteBatch _spriteBatch) {    //dibujar todas las casillas
             foreach (Casilla casilla in casillas)
