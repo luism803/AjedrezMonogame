@@ -14,9 +14,10 @@ namespace AjedrezMonogame.Class.Piezas {
             AnyadirJugada(tablero, new Posicion(pos.X + 1, pos.Y - 1));
             AnyadirJugada(tablero, new Posicion(pos.X - 1, pos.Y + 1));
             AnyadirJugada(tablero, new Posicion(pos.X - 1, pos.Y - 1));
-            AnyadirEnroques(tablero, pos);
-            if (comprobar)
+            if (comprobar) {
+                AnyadirEnroques(tablero, pos);
                 ComprobarJugadas(tablero, pos);
+            }
             return jugadas;
         }
         private void AnyadirEnroques(Tablero tablero, Posicion pos) {
