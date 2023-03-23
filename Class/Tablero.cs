@@ -19,7 +19,7 @@ namespace AjedrezMonogame.Class {
                 this.fichaFin = fichaFin;
             }
         }
-        public Posicion Puntero { get; set; }
+        private Posicion puntero;
         private Posicion seleccion;
         private List<Posicion> jugadas;
         private Casilla[,] casillas;
@@ -27,8 +27,11 @@ namespace AjedrezMonogame.Class {
         private List<RegistroJugada> registro;
         private Texture2D tileset;
         private bool coronando;
+        private int ladoCoronacion;
+        Pieza[] piezasActuales;
+        Posicion[] posiciones;
         public Tablero(GraphicsDevice graphicsDevice, Posicion puntero, Texture2D tileset) {
-            this.Puntero = puntero;
+            this.puntero = puntero;
             casillas = new Casilla[8, 8];
             jugadas = new List<Posicion>();
 
@@ -50,50 +53,64 @@ namespace AjedrezMonogame.Class {
             casillaSeleccion = null;
             registro = new List<RegistroJugada>();
             coronando = false;
+            ladoCoronacion = 0;
+            piezasActuales = new Pieza[3];
+            posiciones = new Posicion[3];
         }
         public Tablero(GraphicsDevice graphicsDevice, Texture2D tileset)
             : this(graphicsDevice, new Posicion(), tileset) { }
-        public void Update(Posicion puntero) {
-            jugadas.Clear();    //vaciar las jugadas posibles
-            this.Puntero = puntero; //actualizar Puntero
-            //SELECCIONAR
+        public void Update() {
+            //GUARDAR JUGADAS DE LA CASILLA SELECCIONADA
+            if (!coronando)
+                jugadas.Clear();    //vaciar las jugadas posibles
             if (seleccion != null) {    //si hay seleccionada una casilla
                 if (casillas[seleccion.X, seleccion.Y].Ficha != null) { //si hay una ficha en la casilla seleccionada
                     jugadas = casillas[seleccion.X, seleccion.Y].Ficha.CalcularJugadas(this, seleccion, true);  //guardar las jugadas posibles de esa jugada
                 }
             }
-            foreach (var casilla in casillas) { //actualizar los colores de las casillas
+            //ACTUALIZAR COLORES DE LAS CASILLAS
+            foreach (var casilla in casillas) {
                 casilla.Puntero = casilla.Pos.Equals(puntero);  //si la casilla esta siendo apuntada
                 casilla.Seleccion = casilla.Pos.Equals(seleccion);  //si la casilla esta sinedo seleccionada
                 casilla.Jugada = jugadas.Exists((j) => casilla.Pos.Equals(j));  //si la casilla es una jugada posible
             }
-            coronando = PeonCoronando() != null;
-            if (coronando) {
-                MostrarPosiblesCoronaciones();
+            //CORONACION
+            if (PeonCoronando() != null) {
+                coronando = true;
+                ElegirCoronacion();
             }
         }
-        private void MostrarPosiblesCoronaciones() {
+        private void ElegirCoronacion() {
             Posicion peonCoronado = PeonCoronando();
-            Pieza[] piezasActuales = new Pieza[3];
-            Posicion[] posiciones = new Posicion[3];
-            int ladoCoronacion = 0;
+            ladoCoronacion = 0;
             //blancas
             if (casillas[peonCoronado.X, peonCoronado.Y].Ficha.Lado == 0) {
-                //guardar fichas actuales
+                //posiciones
                 posiciones[0] = new Posicion(peonCoronado.X, peonCoronado.Y + 1);
                 posiciones[1] = new Posicion(peonCoronado.X, peonCoronado.Y + 2);
                 posiciones[2] = new Posicion(peonCoronado.X, peonCoronado.Y + 3);
                 ladoCoronacion = 0;
+            } else {
+                //posiciones
+                posiciones[0] = new Posicion(peonCoronado.X, peonCoronado.Y - 1);
+                posiciones[1] = new Posicion(peonCoronado.X, peonCoronado.Y - 2);
+                posiciones[2] = new Posicion(peonCoronado.X, peonCoronado.Y - 3);
+                ladoCoronacion = 1;
             }
             //guardar fichas actuales
-            piezasActuales[0] = casillas[posiciones[0].X, posiciones[0].Y + 1].Ficha;
-            piezasActuales[1] = casillas[posiciones[1].X, posiciones[1].Y + 2].Ficha;
-            piezasActuales[2] = casillas[posiciones[2].X, posiciones[2].Y + 3].Ficha;
+            piezasActuales[0] = casillas[posiciones[0].X, posiciones[0].Y].Ficha;
+            piezasActuales[1] = casillas[posiciones[1].X, posiciones[1].Y].Ficha;
+            piezasActuales[2] = casillas[posiciones[2].X, posiciones[2].Y].Ficha;
             //Mostrar opciones
-            casillas[peonCoronado.X, peonCoronado.Y].Ficha = new Reina(tileset, 0);
-            casillas[posiciones[0].X, posiciones[0].Y].Ficha = new Caballo(tileset, 0);
-            casillas[posiciones[1].X, posiciones[1].Y].Ficha = new Torre(tileset, 0);
-            casillas[posiciones[2].X, posiciones[2].Y].Ficha = new Alfil(tileset, 0);
+            casillas[peonCoronado.X, peonCoronado.Y].Ficha = new Reina(tileset, ladoCoronacion);
+            casillas[posiciones[0].X, posiciones[0].Y].Ficha = new Caballo(tileset, ladoCoronacion);
+            casillas[posiciones[1].X, posiciones[1].Y].Ficha = new Torre(tileset, ladoCoronacion);
+            casillas[posiciones[2].X, posiciones[2].Y].Ficha = new Alfil(tileset, ladoCoronacion);
+            //añadir opciones a jugadas
+            jugadas.Add(peonCoronado);
+            jugadas.Add(posiciones[0]);
+            jugadas.Add(posiciones[1]);
+            jugadas.Add(posiciones[2]);
         }
         private Posicion PeonCoronando() {
             foreach (Casilla casilla in casillas)
@@ -139,18 +156,27 @@ namespace AjedrezMonogame.Class {
             //rey negro
             casillas[4, 0].Ficha = new Rey(tileset, 1);
         }
-        public void Seleccionar() {
-            if (casillaSeleccion == null) { //si no hay seleccion
-                int ladoActual = CalcularLadoActual(); //lado de la ficha que le toca jugar
-                seleccion = Puntero.Clone;  //actualizar la seleccion (Posicion)
-                casillaSeleccion = casillas[seleccion.X, seleccion.Y];  //actualizar la casilla de seleccion
-                if (casillaSeleccion.Ficha == null ||               //si la casilla seleccionada esta vacia
-                    casillaSeleccion.Ficha.Lado != ladoActual) {    //o casilla seleccionada no es del color correspondiente
-                    QuitarSeleccion();
+        public void Seleccionar() { //FALTA CREAR UNA SOBRECARGA QUE RECIBA EL PUNTERO (Posicion) si se mete jugar con el raton
+            if (!coronando) {
+                if (casillaSeleccion == null) { //si no hay seleccion
+                    int ladoActual = CalcularLadoActual(); //lado de la ficha que le toca jugar
+                    seleccion = puntero.Clone;  //actualizar la seleccion (Posicion)
+                    casillaSeleccion = casillas[seleccion.X, seleccion.Y];  //actualizar la casilla de seleccion
+                    if (casillaSeleccion.Ficha == null ||               //si la casilla seleccionada esta vacia
+                        casillaSeleccion.Ficha.Lado != ladoActual) {    //o casilla seleccionada no es del color correspondiente
+                        QuitarSeleccion();
+                    }
+                } else if (jugadas.Exists((j) => puntero.Equals(j))) { //si se apunta hacia una casilla que es una jugada
+                    MoverPieza();   //mover la pieza seleecionada hacia la casilla apuntada
                 }
-            } else if (jugadas.Exists((j) => Puntero.Equals(j))) { //si se apunta hacia una casilla que es una jugada
-                MoverPieza();   //mover la pieza seleecionada hacia la casilla apuntada
+            } else {    //se elige la pieza de coronacion
+                casillas[posiciones[0].X, posiciones[0].Y * 2 - posiciones[1].Y].Ficha = casillas[puntero.X, puntero.Y].Ficha;
+                casillas[posiciones[0].X, posiciones[0].Y].Ficha = piezasActuales[0];
+                casillas[posiciones[1].X, posiciones[1].Y].Ficha = piezasActuales[1];
+                casillas[posiciones[2].X, posiciones[2].Y].Ficha = piezasActuales[2];
+                coronando = false;
             }
+
         }
         private int CalcularLadoActual() {
             return (registro.Count == 0 || registro.Last().fichaOrigen.Lado == 1) ? 0 : 1;
@@ -161,7 +187,7 @@ namespace AjedrezMonogame.Class {
             casillaSeleccion = null;
         }
         private void MoverPieza() { //se puede llamar a la funion copia
-            MoverPieza(Puntero, seleccion);
+            MoverPieza(puntero, seleccion);
             QuitarSeleccion();
         }
         public void MoverPieza(Posicion fin, Posicion ori) {
@@ -265,6 +291,26 @@ namespace AjedrezMonogame.Class {
         }
         public bool WasMoved(Posicion pos) {
             return registro.Exists(r => r.o.Equals(pos));
+        }
+        public void Arriba() {
+            if (!coronando && puntero.Y > 0
+                || puntero.Y > 4 && ladoCoronacion == 1
+                || puntero.Y > 0 && ladoCoronacion == 0)
+                puntero.Y--;
+        }
+        public void Abajo() {
+            if (!coronando && puntero.Y < 7
+                || coronando && puntero.Y < 3 && ladoCoronacion == 0
+                || coronando && puntero.Y < 7 && ladoCoronacion == 1)
+                puntero.Y++;
+        }
+        public void Izquierda() {
+            if (puntero.X > 0 && !coronando)
+                puntero.X--;
+        }
+        public void Derecha() {
+            if (puntero.X < 7 && !coronando)
+                puntero.X++;
         }
     }
 }

@@ -24,21 +24,5 @@
             X = x;
             Y = y;
         }
-        public void Arriba() {
-            if (Y > 0)
-                Y--;
-        }
-        public void Abajo() {
-            if (Y < 7)
-                Y++;
-        }
-        public void Izquierda() {
-            if (X > 0)
-                X--;
-        }
-        public void Derecha() {
-            if (X < 7)
-                X++;
-        }
     }
 }

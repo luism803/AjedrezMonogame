@@ -8,9 +8,9 @@ namespace AjedrezMonogame {
     public class Game1 : Game {
         public struct InfoTecla {
             public float TiempoPulsacion;
-            public Action<Posicion> AccionTecla;
+            public Action AccionTecla;
 
-            public InfoTecla(Action<Posicion> accionTecla) {
+            public InfoTecla(Action accionTecla) {
                 TiempoPulsacion = 0;
                 AccionTecla = accionTecla;
             }
@@ -35,13 +35,13 @@ namespace AjedrezMonogame {
 
         protected override void Initialize() {
             // TODO: Add your initialization logic here
-            teclas.Add(Keys.Left, new InfoTecla((posicion) => posicion.Izquierda()));
-            teclas.Add(Keys.Right, new InfoTecla((posicion) => posicion.Derecha()));
-            teclas.Add(Keys.Up, new InfoTecla((posicion) => posicion.Arriba()));
-            teclas.Add(Keys.Down, new InfoTecla((posicion) => posicion.Abajo()));
-            teclas.Add(Keys.Enter, new InfoTecla((posicion) => tablero.Seleccionar()));
-            teclas.Add(Keys.Space, new InfoTecla((posicion) => tablero.QuitarSeleccion()));
-            teclas.Add(Keys.Tab, new InfoTecla((posicion) => tablero.Retroceder()));
+            teclas.Add(Keys.Left, new InfoTecla(() => tablero.Izquierda()));
+            teclas.Add(Keys.Right, new InfoTecla(() => tablero.Derecha()));
+            teclas.Add(Keys.Up, new InfoTecla(() => tablero.Arriba()));
+            teclas.Add(Keys.Down, new InfoTecla(() => tablero.Abajo()));
+            teclas.Add(Keys.Enter, new InfoTecla(() => tablero.Seleccionar()));
+            teclas.Add(Keys.Space, new InfoTecla(() => tablero.QuitarSeleccion()));
+            teclas.Add(Keys.Tab, new InfoTecla(() => tablero.Retroceder()));
 
             _graphics.PreferredBackBufferWidth = (int)(_graphics.GraphicsDevice.DisplayMode.Width * 0.75);
             _graphics.PreferredBackBufferHeight = (int)(_graphics.GraphicsDevice.DisplayMode.Height * 0.75);
@@ -92,9 +92,9 @@ namespace AjedrezMonogame {
 
             foreach (var kvp in teclas) {
                 InfoTecla infoTecla = kvp.Value;
-                if (kvp.Value.TiempoPulsacion <= 0) {
-                    if (kbs.IsKeyDown(kvp.Key)) {
-                        infoTecla.AccionTecla.Invoke(puntero);
+                if (infoTecla.TiempoPulsacion <= 0) {   //si esta disponble
+                    if (kbs.IsKeyDown(kvp.Key)) {   //si la tecla esta siendo presionada
+                        infoTecla.AccionTecla.Invoke();
                         infoTecla.TiempoPulsacion = tiempoLimite;
                     }
                 } else {
@@ -103,7 +103,7 @@ namespace AjedrezMonogame {
                 teclas[kvp.Key] = infoTecla;
             }
 
-            tablero.Update(puntero);
+            tablero.Update();
             base.Update(gameTime);
         }
 
