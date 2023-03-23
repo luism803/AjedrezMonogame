@@ -27,6 +27,8 @@ namespace AjedrezMonogame {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
 
+        bool ratonPresionado;
+
         public Game1() {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
@@ -79,8 +81,7 @@ namespace AjedrezMonogame {
             tilesetTexture = resizedTexture;
 
             tablero = new Tablero(GraphicsDevice, tilesetTexture);
-            puntero = new Posicion();
-            puntero.Set(6, 7);
+            ratonPresionado = false;
         }
 
         protected override void Update(GameTime gameTime) {
@@ -88,6 +89,26 @@ namespace AjedrezMonogame {
                 Exit();
 
             // TODO: Add your update logic here
+            //CREAR CLASE CONTROLES
+            //CREAR CLASE CONTROLES
+            //CREAR CLASE CONTROLES
+            //CREAR CLASE CONTROLES
+            //CREAR CLASE CONTROLES
+            //CREAR CLASE CONTROLES
+            //RATON
+            MouseState mouseState = Mouse.GetState();
+
+            if (!ratonPresionado && mouseState.LeftButton == ButtonState.Pressed) {
+                ratonPresionado = true;
+                tablero.SeleccionarRaton(new Posicion(mouseState.X, mouseState.Y));
+            }
+            if (mouseState.RightButton == ButtonState.Pressed)
+                tablero.QuitarSeleccion();
+            if (ratonPresionado && mouseState.LeftButton == ButtonState.Released) {
+                ratonPresionado = false;
+                tablero.SeleccionarRaton(new Posicion(mouseState.X, mouseState.Y));
+            }
+            //TECLADO
             KeyboardState kbs = Keyboard.GetState();
 
             foreach (var kvp in teclas) {

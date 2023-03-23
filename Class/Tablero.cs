@@ -30,6 +30,8 @@ namespace AjedrezMonogame.Class {
         private int ladoCoronacion;
         Pieza[] piezasActuales;
         Posicion[] posiciones;
+        int height;
+        bool mostrarPuntero;
         public Tablero(GraphicsDevice graphicsDevice, Posicion puntero, Texture2D tileset) {
             this.puntero = puntero;
             casillas = new Casilla[8, 8];
@@ -40,13 +42,14 @@ namespace AjedrezMonogame.Class {
 
             for (int y = 0; y < 8; y++) {
                 for (int x = 0; x < 8; x++) {
-                    Color color = ((x + y) % 2 == 0) ? blanca : negra;
+                    Color color = (((x + y) & 1) == 0) ? blanca : negra;
                     casillas[x, y] = new Casilla(graphicsDevice, x, y,
                         graphicsDevice.Viewport.Height / 8,
                         color
                     );
                 }
             }
+            height = graphicsDevice.Viewport.Height;
             this.tileset = tileset;
             ColocarPiezas();
             seleccion = null;
@@ -56,6 +59,7 @@ namespace AjedrezMonogame.Class {
             ladoCoronacion = 0;
             piezasActuales = new Pieza[3];
             posiciones = new Posicion[3];
+            mostrarPuntero = false;
         }
         public Tablero(GraphicsDevice graphicsDevice, Texture2D tileset)
             : this(graphicsDevice, new Posicion(), tileset) { }
@@ -70,7 +74,7 @@ namespace AjedrezMonogame.Class {
             }
             //ACTUALIZAR COLORES DE LAS CASILLAS
             foreach (var casilla in casillas) {
-                casilla.Puntero = casilla.Pos.Equals(puntero);  //si la casilla esta siendo apuntada
+                casilla.Puntero = mostrarPuntero && casilla.Pos.Equals(puntero);  //si la casilla esta siendo apuntada
                 casilla.Seleccion = casilla.Pos.Equals(seleccion);  //si la casilla esta sinedo seleccionada
                 casilla.Jugada = jugadas.Exists((j) => casilla.Pos.Equals(j));  //si la casilla es una jugada posible
             }
@@ -157,26 +161,37 @@ namespace AjedrezMonogame.Class {
             casillas[4, 0].Ficha = new Rey(tileset, 1);
         }
         public void Seleccionar() { //FALTA CREAR UNA SOBRECARGA QUE RECIBA EL PUNTERO (Posicion) si se mete jugar con el raton
+            Seleccionar(puntero);
+        }
+        public void SeleccionarRaton(Posicion pos) {
+            mostrarPuntero = false;
+            //ajustar posicion raton
+            Posicion posRaton = new Posicion(pos.X / (height / 8), pos.Y / (height / 8));
+            if (IsInside(posRaton))
+                Seleccionar(posRaton);
+        }
+        public void Seleccionar(Posicion pos) { //FALTA CREAR UNA SOBRECARGA QUE RECIBA EL PUNTERO (Posicion) si se mete jugar con el raton
             if (!coronando) {
-                if (casillaSeleccion == null) { //si no hay seleccion
-                    int ladoActual = CalcularLadoActual(); //lado de la ficha que le toca jugar
-                    seleccion = puntero.Clone;  //actualizar la seleccion (Posicion)
-                    casillaSeleccion = casillas[seleccion.X, seleccion.Y];  //actualizar la casilla de seleccion
-                    if (casillaSeleccion.Ficha == null ||               //si la casilla seleccionada esta vacia
-                        casillaSeleccion.Ficha.Lado != ladoActual) {    //o casilla seleccionada no es del color correspondiente
-                        QuitarSeleccion();
-                    }
-                } else if (jugadas.Exists((j) => puntero.Equals(j))) { //si se apunta hacia una casilla que es una jugada
+                //si hay seleccion
+                if (seleccion != null && jugadas.Exists((j) => pos.Equals(j))) { //si se apunta hacia una casilla que es una jugada
+                    puntero = pos.Clone;
                     MoverPieza();   //mover la pieza seleecionada hacia la casilla apuntada
                 }
+                puntero = pos.Clone;
+                int ladoActual = CalcularLadoActual(); //lado de la ficha que le toca jugar
+                seleccion = pos.Clone;  //actualizar la seleccion (Posicion)
+                casillaSeleccion = casillas[seleccion.X, seleccion.Y];  //actualizar la casilla de seleccion
+                if (casillaSeleccion.Ficha == null ||               //si la casilla seleccionada esta vacia
+                    casillaSeleccion.Ficha.Lado != ladoActual) {    //o casilla seleccionada no es del color correspondiente
+                    QuitarSeleccion();
+                }
             } else {    //se elige la pieza de coronacion
-                casillas[posiciones[0].X, posiciones[0].Y * 2 - posiciones[1].Y].Ficha = casillas[puntero.X, puntero.Y].Ficha;
+                casillas[posiciones[0].X, posiciones[0].Y * 2 - posiciones[1].Y].Ficha = casillas[pos.X, pos.Y].Ficha;
                 casillas[posiciones[0].X, posiciones[0].Y].Ficha = piezasActuales[0];
                 casillas[posiciones[1].X, posiciones[1].Y].Ficha = piezasActuales[1];
                 casillas[posiciones[2].X, posiciones[2].Y].Ficha = piezasActuales[2];
                 coronando = false;
             }
-
         }
         private int CalcularLadoActual() {
             return (registro.Count == 0 || registro.Last().fichaOrigen.Lado == 1) ? 0 : 1;
@@ -293,22 +308,26 @@ namespace AjedrezMonogame.Class {
             return registro.Exists(r => r.o.Equals(pos));
         }
         public void Arriba() {
+            mostrarPuntero = true;
             if (!coronando && puntero.Y > 0
                 || puntero.Y > 4 && ladoCoronacion == 1
                 || puntero.Y > 0 && ladoCoronacion == 0)
                 puntero.Y--;
         }
         public void Abajo() {
+            mostrarPuntero = true;
             if (!coronando && puntero.Y < 7
                 || coronando && puntero.Y < 3 && ladoCoronacion == 0
                 || coronando && puntero.Y < 7 && ladoCoronacion == 1)
                 puntero.Y++;
         }
         public void Izquierda() {
+            mostrarPuntero = true;
             if (puntero.X > 0 && !coronando)
                 puntero.X--;
         }
         public void Derecha() {
+            mostrarPuntero = true;
             if (puntero.X < 7 && !coronando)
                 puntero.X++;
         }
