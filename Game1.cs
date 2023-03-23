@@ -4,6 +4,8 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+
 namespace AjedrezMonogame {
     public class Game1 : Game {
         public struct InfoTecla {
@@ -101,12 +103,13 @@ namespace AjedrezMonogame {
             if (!ratonPresionado && mouseState.LeftButton == ButtonState.Pressed) {
                 ratonPresionado = true;
                 tablero.SeleccionarRaton(new Posicion(mouseState.X, mouseState.Y));
+                Thread.Sleep(100);
             }
             if (mouseState.RightButton == ButtonState.Pressed)
                 tablero.QuitarSeleccion();
             if (ratonPresionado && mouseState.LeftButton == ButtonState.Released) {
                 ratonPresionado = false;
-                tablero.SeleccionarRaton(new Posicion(mouseState.X, mouseState.Y));
+                tablero.SeleccionarRaton(new Posicion(mouseState.X, mouseState.Y), false);
             }
             //TECLADO
             KeyboardState kbs = Keyboard.GetState();

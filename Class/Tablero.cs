@@ -163,12 +163,14 @@ namespace AjedrezMonogame.Class {
         public void Seleccionar() { //FALTA CREAR UNA SOBRECARGA QUE RECIBA EL PUNTERO (Posicion) si se mete jugar con el raton
             Seleccionar(puntero);
         }
-        public void SeleccionarRaton(Posicion pos) {
-            mostrarPuntero = false;
-            //ajustar posicion raton
-            Posicion posRaton = new Posicion(pos.X / (height / 8), pos.Y / (height / 8));
-            if (IsInside(posRaton))
-                Seleccionar(posRaton);
+        public void SeleccionarRaton(Posicion pos, bool normal = true) {
+            if (normal || !coronando) {
+                mostrarPuntero = false;
+                //ajustar posicion raton
+                Posicion posRaton = new Posicion(pos.X / (height / 8), pos.Y / (height / 8));
+                if (IsInside(posRaton))
+                    Seleccionar(posRaton);
+            }
         }
         public void Seleccionar(Posicion pos) { //FALTA CREAR UNA SOBRECARGA QUE RECIBA EL PUNTERO (Posicion) si se mete jugar con el raton
             if (!coronando) {
@@ -186,8 +188,8 @@ namespace AjedrezMonogame.Class {
                     QuitarSeleccion();
                 }
             } else {    //se elige la pieza de coronacion
-                if (posiciones.ToList().Exists(p => p.Equals(pos)) ||
-                    pos.Equals(new Posicion(posiciones[0].X, posiciones[0].Y * 2 - posiciones[1].Y))) {   //la pieza seleccionada este en una de las posiciones guardadas
+                if (posiciones.ToList().Exists(p => p.Equals(pos)) ||   //la pieza seleccionada este en una de las posiciones guardadas
+                    pos.Equals(new Posicion(posiciones[0].X, posiciones[0].Y * 2 - posiciones[1].Y))) {   //la pieza seleccionada es la reina
                     casillas[posiciones[0].X, posiciones[0].Y * 2 - posiciones[1].Y].Ficha = casillas[pos.X, pos.Y].Ficha;
                     casillas[posiciones[0].X, posiciones[0].Y].Ficha = piezasActuales[0];
                     casillas[posiciones[1].X, posiciones[1].Y].Ficha = piezasActuales[1];
@@ -226,7 +228,7 @@ namespace AjedrezMonogame.Class {
             if (registroJugada.fichaOrigen is Peon && registroJugada.fichaFin == null
                 && registroJugada.o.X != registroJugada.f.X)    //si el peon esta comiendo un peon pasado
                 casillas[registroJugada.f.X, registroJugada.o.Y].Ficha = null;  //quitar el peon comido
-            //ENROQUE
+                                                                                //ENROQUE
             if (registroJugada.fichaOrigen is Rey && Math.Abs(registroJugada.o.X - registroJugada.f.X) == 2) { //si el rey se esta moviendo dos casillas a la derecha o izquierda
                 if (registroJugada.o.X - registroJugada.f.X < 0) {  //DERECHA
                     casillas[registroJugada.f.X + 1, registroJugada.f.Y].Ficha = null;
