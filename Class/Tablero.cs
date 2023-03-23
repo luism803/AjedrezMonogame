@@ -186,11 +186,14 @@ namespace AjedrezMonogame.Class {
                     QuitarSeleccion();
                 }
             } else {    //se elige la pieza de coronacion
-                casillas[posiciones[0].X, posiciones[0].Y * 2 - posiciones[1].Y].Ficha = casillas[pos.X, pos.Y].Ficha;
-                casillas[posiciones[0].X, posiciones[0].Y].Ficha = piezasActuales[0];
-                casillas[posiciones[1].X, posiciones[1].Y].Ficha = piezasActuales[1];
-                casillas[posiciones[2].X, posiciones[2].Y].Ficha = piezasActuales[2];
-                coronando = false;
+                if (posiciones.ToList().Exists(p => p.Equals(pos)) ||
+                    pos.Equals(new Posicion(posiciones[0].X, posiciones[0].Y * 2 - posiciones[1].Y))) {   //la pieza seleccionada este en una de las posiciones guardadas
+                    casillas[posiciones[0].X, posiciones[0].Y * 2 - posiciones[1].Y].Ficha = casillas[pos.X, pos.Y].Ficha;
+                    casillas[posiciones[0].X, posiciones[0].Y].Ficha = piezasActuales[0];
+                    casillas[posiciones[1].X, posiciones[1].Y].Ficha = piezasActuales[1];
+                    casillas[posiciones[2].X, posiciones[2].Y].Ficha = piezasActuales[2];
+                    coronando = false;
+                }
             }
         }
         private int CalcularLadoActual() {
