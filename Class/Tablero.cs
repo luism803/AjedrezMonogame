@@ -30,8 +30,8 @@ namespace AjedrezMonogame.Class {
         private int ladoCoronacion;
         Pieza[] piezasActuales;
         Posicion[] posiciones;
-        int height;
-        bool mostrarPuntero;
+        private int height;
+        private bool mostrarPuntero;
         public Tablero(GraphicsDevice graphicsDevice, Posicion puntero, Texture2D tileset) {
             this.puntero = puntero;
             casillas = new Casilla[8, 8];
@@ -278,7 +278,7 @@ namespace AjedrezMonogame.Class {
             return null;
         }
         public void Retroceder() {
-            if (registro.Count > 0) {
+            if (!coronando && registro.Count > 0) {
                 RegistroJugada registroJugada = registro.Last();
                 casillas[registroJugada.o.X, registroJugada.o.Y].Ficha = registroJugada.fichaOrigen;
                 casillas[registroJugada.f.X, registroJugada.f.Y].Ficha = registroJugada.fichaFin;
