@@ -126,9 +126,10 @@ namespace AjedrezMonogame {
                 }
                 teclas[kvp.Key] = infoTecla;
             }
-
             tablero.Update();
-            base.Update(gameTime);
+            //if (tablero.Update())
+            //    Debug.WriteLine("¡Fin!");
+            //base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime) {

@@ -83,6 +83,17 @@ namespace AjedrezMonogame.Class {
                 coronando = true;
                 ElegirCoronacion();
             }
+            ////JAQUES
+            //return ComprobarJaques();
+        }
+        private bool ComprobarJaques() {    //devuelve true si ha finalizado la partida (jaque mate o ahogado)
+            return ComprobarJaque(CalcularLadoActual());
+        }
+        private bool ComprobarJaque(int lado) { //actualiza la casilla del rey si esta en jaque y devuelve si el jugador tiene opciones para mover
+            if (IsInJaque(lado)) {
+                casillas[GetRey(lado).X, GetRey(lado).Y].Jugada = true;
+            }
+            return JugadasPosibles(lado).Count == 0;
         }
         private void ElegirCoronacion() {
             Posicion peonCoronado = PeonCoronando();
@@ -253,7 +264,7 @@ namespace AjedrezMonogame.Class {
             return IsInside(pos) && casillas[pos.X, pos.Y].Ficha != null &&
             casillas[pos.X, pos.Y].Ficha.Lado != lado;
         }
-        private List<Posicion> jugadasPosibles(int lado) {
+        private List<Posicion> JugadasPosibles(int lado) {
             List<Posicion> jugadas = new List<Posicion>();
             foreach (Casilla casilla in casillas)
                 if (IsEnemy(casilla.Pos, -lado + 1))
