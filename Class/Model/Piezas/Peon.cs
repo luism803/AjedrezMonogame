@@ -1,10 +1,8 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using System.Collections.Generic;
-
-namespace AjedrezMonogame.Class.Piezas {
+﻿using System.Collections.Generic;
+namespace AjedrezMonogame.Class.Model.Piezas {
     internal class Peon : Pieza {
-        public Peon(Texture2D tileset, int lado) : base(5, lado, tileset) { }
-        public override List<Posicion> CalcularJugadas(Tablero tablero, Posicion pos, bool comprobar = true) {
+        public Peon(int lado) : base(5, lado) { }
+        public override List<Posicion> CalcularJugadas(TableroModel tablero, Posicion pos, bool comprobar = true) {
             jugadas = new List<Posicion>();
             if (lado == 0) {  //blancas
                 //movimiento
@@ -25,12 +23,12 @@ namespace AjedrezMonogame.Class.Piezas {
                 ComprobarJugadas(tablero, pos);
             return jugadas;
         }
-        protected override bool AnyadirJugada(Tablero tablero, Posicion pos) {
+        protected override bool AnyadirJugada(TableroModel tablero, Posicion pos) {
             if (tablero.IsEmpty(pos))
                 jugadas.Add(pos.Clone);
             return tablero.IsEmpty(pos);
         }
-        private void AnyadirAtaque(Tablero tablero, Posicion pos) {
+        private void AnyadirAtaque(TableroModel tablero, Posicion pos) {
             if (tablero.IsEnemy(pos, lado))
                 jugadas.Add(pos.Clone);
             if (lado == 0) {
@@ -45,7 +43,7 @@ namespace AjedrezMonogame.Class.Piezas {
             }
         }
         public override Pieza Clone() {
-            return new Peon(tileset, lado);
+            return new Peon(lado);
         }
     }
 }

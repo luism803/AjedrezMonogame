@@ -1,10 +1,8 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using System.Collections.Generic;
-
-namespace AjedrezMonogame.Class.Piezas {
+﻿using System.Collections.Generic;
+namespace AjedrezMonogame.Class.Model.Piezas {
     internal class Torre : Pieza {
-        public Torre(Texture2D tileset, int lado) : base(4, lado, tileset) { }
-        public override List<Posicion> CalcularJugadas(Tablero tablero, Posicion pos, bool comprobar) {
+        public Torre(int lado) : base(4, lado) { }
+        public override List<Posicion> CalcularJugadas(TableroModel tablero, Posicion pos, bool comprobar) {
             jugadas = new List<Posicion>();
             Posicion newJugada;
 
@@ -33,7 +31,7 @@ namespace AjedrezMonogame.Class.Piezas {
             return jugadas;
         }
         public override Pieza Clone() {
-            return new Torre(tileset, lado);
+            return new Torre(lado);
         }
     }
 }

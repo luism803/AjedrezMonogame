@@ -1,10 +1,8 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using System.Collections.Generic;
-
-namespace AjedrezMonogame.Class.Piezas {
+﻿using System.Collections.Generic;
+namespace AjedrezMonogame.Class.Model.Piezas {
     internal class Rey : Pieza {
-        public Rey(Texture2D tileset, int lado) : base(0, lado, tileset) { }
-        public override List<Posicion> CalcularJugadas(Tablero tablero, Posicion pos, bool comprobar) {
+        public Rey(int lado) : base(0, lado) { }
+        public override List<Posicion> CalcularJugadas(TableroModel tablero, Posicion pos, bool comprobar) {
             jugadas = new List<Posicion>();
             AnyadirJugada(tablero, new Posicion(pos.X + 1, pos.Y));
             AnyadirJugada(tablero, new Posicion(pos.X - 1, pos.Y));
@@ -20,8 +18,8 @@ namespace AjedrezMonogame.Class.Piezas {
             }
             return jugadas;
         }
-        private void AnyadirEnroques(Tablero tablero, Posicion pos) {
-            if ((lado == 0 && pos.Y == 7) || (lado == 1 && pos.Y == 0)) {
+        private void AnyadirEnroques(TableroModel tablero, Posicion pos) {
+            if (lado == 0 && pos.Y == 7 || lado == 1 && pos.Y == 0) {
                 Posicion pos1 = new Posicion(pos.X + 1, pos.Y);
                 Posicion pos2 = new Posicion(pos.X + 2, pos.Y);
                 //DERECHA
@@ -40,7 +38,7 @@ namespace AjedrezMonogame.Class.Piezas {
             }
         }
         public override Pieza Clone() {
-            return new Rey(tileset, lado);
+            return new Rey(lado);
         }
     }
 }

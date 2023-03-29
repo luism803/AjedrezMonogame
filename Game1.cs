@@ -1,4 +1,6 @@
 ﻿using AjedrezMonogame.Class;
+using AjedrezMonogame.Class.Model;
+using AjedrezMonogame.Class.View;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -24,7 +26,8 @@ namespace AjedrezMonogame {
         Texture2D tilesetTexture;
 
         Posicion puntero;
-        Tablero tablero;
+        TableroModel tablero;
+        TableroView tableroView;
 
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
@@ -82,7 +85,9 @@ namespace AjedrezMonogame {
             // Usar la nueva textura redimensionada
             tilesetTexture = resizedTexture;
 
-            tablero = new Tablero(GraphicsDevice, tilesetTexture);
+            tablero = new TableroModel(GraphicsDevice);
+            tableroView = new TableroView(GraphicsDevice, _spriteBatch, tilesetTexture, tablero.GetCasillas());
+            tablero.Subscribe(tableroView);
             ratonPresionado = false;
         }
 
@@ -136,7 +141,7 @@ namespace AjedrezMonogame {
             GraphicsDevice.Clear(Color.Black);
 
             _spriteBatch.Begin();
-            tablero.Draw(_spriteBatch);
+            tablero.ActualizarObservadores(_spriteBatch);
             _spriteBatch.End();
 
             base.Draw(gameTime);

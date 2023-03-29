@@ -1,26 +1,21 @@
-﻿using AjedrezMonogame.Class.Model.Piezas;
+﻿using AjedrezMonogame.Class.Model;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 
-namespace AjedrezMonogame.Class
-{
-    internal class Casilla {
-        public Posicion Pos { get; set; }
-        public bool Puntero { get; set; }
-        public bool Jugada { get; set; }
-        public bool Seleccion { get; set; }
-        public Pieza Ficha { get; set; }
+namespace AjedrezMonogame.Class.View {
+    internal class CasillaView : IObserver<CasillaModel> {
 
         Texture2D texture;
         Texture2D textureJugada;
         Texture2D texturePuntero;
         Texture2D textureSeleccion;
         Texture2D textureAtaque;
+        Texture2D tileset;
+        SpriteBatch _spriteBatch;
 
         private Rectangle square;
-        public Casilla(GraphicsDevice graphicsDevice, int x, int y, int size, Color color, bool puntero = false) {
-            Puntero = puntero;
-            Jugada = false;
+        public CasillaView(GraphicsDevice graphicsDevice, SpriteBatch _spriteBatch, int x, int y, int size, Color color, Texture2D tileset, CasillaModel casillaModel) {
 
             Color colorPuntero = Color.FromNonPremultiplied(20, 160, 20, 255);
             Color colorJugada = Color.FromNonPremultiplied(130, 200, 255, 175);
@@ -43,23 +38,48 @@ namespace AjedrezMonogame.Class
             textureSeleccion.SetData(new[] { colorSeleccion });
 
             square = new Rectangle(x * size, y * size, size, size);
-            Pos = new Posicion(x, y);
+
+            this.tileset = tileset;
+            this._spriteBatch = _spriteBatch;
+
+            casillaModel.Subscribe(this);
         }
-        public void Draw(SpriteBatch _spriteBatch) {
+        public void Draw(CasillaModel model) {
             _spriteBatch.Draw(texture, square, Color.White);
-            if (Jugada) {
-                if (Ficha == null)
+            if (model.Jugada) {
+                if (model.Ficha == null)
                     _spriteBatch.Draw(textureJugada, square, Color.White);
                 else
                     _spriteBatch.Draw(textureAtaque, square, Color.White);
             }
-            if (Seleccion) {
+            if (model.Seleccion) {
                 _spriteBatch.Draw(textureSeleccion, square, Color.White);
             }
-            if (Puntero) {
+            if (model.Puntero) {
                 _spriteBatch.Draw(texturePuntero, square, Color.White);
-
             }
+            if (model.Ficha != null)  //si tiene una pieza
+                DrawPieza(_spriteBatch, square.X, square.Y, model.Ficha.CodPieza, model.Ficha.Lado);   //dibujar la pieza
+        }
+        private void DrawPieza(SpriteBatch spriteBatch, int x, int y, int pieza, int lado) {
+            int tileWidth = tileset.Width / 6;
+            int tileHeight = tileset.Height / 2;
+            Rectangle tileSourceRect = new Rectangle(
+                pieza * tileWidth,
+                lado * tileHeight,
+                tileWidth,
+                tileHeight);
+            Vector2 tilePosition = new Vector2(x, y); // Position to draw the tile at
+            spriteBatch.Draw(tileset, tilePosition, tileSourceRect, Color.White);
+        }
+        public void OnNext(CasillaModel casillaModel) {
+            Draw(casillaModel);
+        }
+        public void OnCompleted() {
+            // Implementación
+        }
+        public void OnError(Exception error) {
+            // Implementación
         }
     }
 }
