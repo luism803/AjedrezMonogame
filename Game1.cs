@@ -51,6 +51,9 @@ namespace AjedrezMonogame {
             // TODO: use this.Content to load your game content here
             Texture2D tilesetTexture = Content.Load<Texture2D>("tilesetChess"); //GraphicsDevice.Viewport.Height / 8
                                                                                 // Crear una nueva textura con el tamaño deseado
+            Content.Load<SpriteFont>("Fonts\\Windows64");
+
+
             int newWidth = (GraphicsDevice.Viewport.Height / 8) * 6;
             int newHeight = (GraphicsDevice.Viewport.Height / 8) * 2;
             Texture2D resizedTexture = new Texture2D(GraphicsDevice, newWidth, newHeight);
@@ -119,7 +122,7 @@ namespace AjedrezMonogame {
                 }
                 teclas[kvp.Key] = infoTecla;
             }
-            tablero.Update();
+            tablero.Update((float)gameTime.ElapsedGameTime.TotalMilliseconds);
             //if (tablero.Update())
             //    Debug.WriteLine("¡Fin!");
             //base.Update(gameTime);
@@ -130,6 +133,7 @@ namespace AjedrezMonogame {
 
             _spriteBatch.Begin();
             tablero.ActualizarObservadores();
+            tablero.reloj.Draw(_spriteBatch, Content.Load<SpriteFont>("Fonts\\Windows64"));
             _spriteBatch.End();
 
             base.Draw(gameTime);

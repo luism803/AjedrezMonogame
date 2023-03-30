@@ -28,6 +28,8 @@ namespace AjedrezMonogame.Class.Model {
 
         private Pieza[] piezasActuales;
 
+        public RelojAjedrezModel reloj;
+
         public CasillaModel[,] GetCasillas() { return casillas; }
         public TableroModel(GraphicsDevice graphicsDevice, Posicion puntero) {
             observers = new List<IObserver<TableroModel>>();
@@ -49,10 +51,14 @@ namespace AjedrezMonogame.Class.Model {
             ladoCoronacion = 0;
             height = graphicsDevice.Viewport.Height;
             this.puntero = puntero;
+            reloj = new RelojAjedrezModel(60000);
         }
         public TableroModel(GraphicsDevice graphicsDevice)
             : this(graphicsDevice, new Posicion()) { }
-        public void Update() {
+        public void Update(float tiempoTranscurrido) {
+            if (registro.Count != 0)
+                reloj.restarTiempo(tiempoTranscurrido, CalcularLadoActual());
+            reloj.Dedbug();
             //GUARDAR JUGADAS DE LA CASILLA SELECCIONADA
             if (!coronando)
                 jugadas.Clear();    //vaciar las jugadas posibles
@@ -72,6 +78,7 @@ namespace AjedrezMonogame.Class.Model {
                 coronando = true;
                 ElegirCoronacion();
             }
+
             ////JAQUES
             //return ComprobarJaques();
             ComprobarJaques();
