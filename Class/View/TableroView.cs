@@ -2,7 +2,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Diagnostics;
 
 namespace AjedrezMonogame.Class.View {
     internal class TableroView : IObserver<TableroModel> {
@@ -30,7 +29,6 @@ namespace AjedrezMonogame.Class.View {
         public void Draw() {
         }
         public void OnNext(TableroModel casillaModel) {
-            Debug.WriteLine("Hola");
         }
         public void OnCompleted() {
             // Implementación

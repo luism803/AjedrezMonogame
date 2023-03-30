@@ -1,31 +1,19 @@
 ﻿using AjedrezMonogame.Class;
 using AjedrezMonogame.Class.Model;
 using AjedrezMonogame.Class.View;
+using AjedrezMonogame.Structs;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 
 namespace AjedrezMonogame {
     public class Game1 : Game {
-        public struct InfoTecla {
-            public float TiempoPulsacion;
-            public Action AccionTecla;
-
-            public InfoTecla(Action accionTecla) {
-                TiempoPulsacion = 0;
-                AccionTecla = accionTecla;
-            }
-        }
 
         Dictionary<Keys, InfoTecla> teclas = new Dictionary<Keys, InfoTecla>();
         const float tiempoLimite = 150f;
 
-        Texture2D tilesetTexture;
-
-        Posicion puntero;
         TableroModel tablero;
         TableroView tableroView;
 
@@ -61,8 +49,8 @@ namespace AjedrezMonogame {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // TODO: use this.Content to load your game content here
-            tilesetTexture = Content.Load<Texture2D>("tilesetChess"); //GraphicsDevice.Viewport.Height / 8
-                                                                      // Crear una nueva textura con el tamaño deseado
+            Texture2D tilesetTexture = Content.Load<Texture2D>("tilesetChess"); //GraphicsDevice.Viewport.Height / 8
+                                                                                // Crear una nueva textura con el tamaño deseado
             int newWidth = (GraphicsDevice.Viewport.Height / 8) * 6;
             int newHeight = (GraphicsDevice.Viewport.Height / 8) * 2;
             Texture2D resizedTexture = new Texture2D(GraphicsDevice, newWidth, newHeight);
@@ -141,7 +129,7 @@ namespace AjedrezMonogame {
             GraphicsDevice.Clear(Color.Black);
 
             _spriteBatch.Begin();
-            tablero.ActualizarObservadores(_spriteBatch);
+            tablero.ActualizarObservadores();
             _spriteBatch.End();
 
             base.Draw(gameTime);

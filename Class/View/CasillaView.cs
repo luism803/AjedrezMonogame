@@ -69,7 +69,7 @@ namespace AjedrezMonogame.Class.View {
                 lado * tileHeight,
                 tileWidth,
                 tileHeight);
-            Vector2 tilePosition = new Vector2(x, y); // Position to draw the tile at
+            Vector2 tilePosition = new Vector2(x, y);
             spriteBatch.Draw(tileset, tilePosition, tileSourceRect, Color.White);
         }
         public void OnNext(CasillaModel casillaModel) {

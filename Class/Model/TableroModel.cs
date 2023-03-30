@@ -1,4 +1,5 @@
 ﻿using AjedrezMonogame.Class.Model.Piezas;
+using AjedrezMonogame.Structs;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -8,35 +9,31 @@ namespace AjedrezMonogame.Class.Model {
     internal class TableroModel : IObservable<TableroModel> {
 
         private List<IObserver<TableroModel>> observers;
-        public struct RegistroJugada {
-            public Posicion o; //origen
-            public Pieza fichaOrigen;
-            public Posicion f; //final
-            public Pieza fichaFin;
-            public RegistroJugada(Posicion o, Posicion f, Pieza fichaOrigen, Pieza fichaFin) {
-                this.o = o;
-                this.f = f;
-                this.fichaOrigen = fichaOrigen;
-                this.fichaFin = fichaFin;
-            }
-        }
+
+        private bool coronando;
+        private bool mostrarPuntero;
+
+        private int ladoCoronacion;
+        private int height;
+
         private Posicion puntero;
         private Posicion seleccion;
+        private Posicion[] posiciones;
         private List<Posicion> jugadas;
-        private CasillaModel[,] casillas;
 
         private CasillaModel casillaSeleccion;
+        private CasillaModel[,] casillas;
 
         private List<RegistroJugada> registro;
-        private bool coronando;
-        private int ladoCoronacion;
-        Pieza[] piezasActuales;
-        Posicion[] posiciones;
-        private int height;
-        private bool mostrarPuntero;
+
+        private Pieza[] piezasActuales;
+
+        public CasillaModel[,] GetCasillas() { return casillas; }
         public TableroModel(GraphicsDevice graphicsDevice, Posicion puntero) {
             observers = new List<IObserver<TableroModel>>();
-            this.puntero = puntero;
+            registro = new List<RegistroJugada>();
+            piezasActuales = new Pieza[3];
+            posiciones = new Posicion[3];
             casillas = new CasillaModel[8, 8];
             jugadas = new List<Posicion>();
             for (int y = 0; y < 8; y++) {
@@ -44,17 +41,14 @@ namespace AjedrezMonogame.Class.Model {
                     casillas[x, y] = new CasillaModel(x, y);
                 }
             }
-
-            height = graphicsDevice.Viewport.Height;
             ColocarPiezas();
             seleccion = null;
             casillaSeleccion = null;
-            registro = new List<RegistroJugada>();
             coronando = false;
-            ladoCoronacion = 0;
-            piezasActuales = new Pieza[3];
-            posiciones = new Posicion[3];
             mostrarPuntero = false;
+            ladoCoronacion = 0;
+            height = graphicsDevice.Viewport.Height;
+            this.puntero = puntero;
         }
         public TableroModel(GraphicsDevice graphicsDevice)
             : this(graphicsDevice, new Posicion()) { }
@@ -82,59 +76,14 @@ namespace AjedrezMonogame.Class.Model {
             //return ComprobarJaques();
             ComprobarJaques();
         }
-        private bool ComprobarJaques() {    //devuelve true si ha finalizado la partida (jaque mate o ahogado)
-            if (!coronando)
-                return ComprobarJaque(CalcularLadoActual());
-            return false;
-        }
-        private bool ComprobarJaque(int lado) { //actualiza la casilla del rey si esta en jaque y devuelve si el jugador tiene opciones para mover
-            if (IsInJaque(lado)) {
-                casillas[GetRey(lado).X, GetRey(lado).Y].Jugada = true;
-            }
-            return JugadasPosibles(lado).Count == 0;
-        }
-        private void ElegirCoronacion() {
-            Posicion peonCoronado = PeonCoronando();
-            ladoCoronacion = 0;
-            //blancas
-            if (casillas[peonCoronado.X, peonCoronado.Y].Ficha.Lado == 0) {
-                //posiciones
-                posiciones[0] = new Posicion(peonCoronado.X, peonCoronado.Y + 1);
-                posiciones[1] = new Posicion(peonCoronado.X, peonCoronado.Y + 2);
-                posiciones[2] = new Posicion(peonCoronado.X, peonCoronado.Y + 3);
-                ladoCoronacion = 0;
-            } else {
-                //posiciones
-                posiciones[0] = new Posicion(peonCoronado.X, peonCoronado.Y - 1);
-                posiciones[1] = new Posicion(peonCoronado.X, peonCoronado.Y - 2);
-                posiciones[2] = new Posicion(peonCoronado.X, peonCoronado.Y - 3);
-                ladoCoronacion = 1;
-            }
-            //guardar fichas actuales
-            piezasActuales[0] = casillas[posiciones[0].X, posiciones[0].Y].Ficha;
-            piezasActuales[1] = casillas[posiciones[1].X, posiciones[1].Y].Ficha;
-            piezasActuales[2] = casillas[posiciones[2].X, posiciones[2].Y].Ficha;
-            //Mostrar opciones
-            casillas[peonCoronado.X, peonCoronado.Y].Ficha = new Reina(ladoCoronacion);
-            casillas[posiciones[0].X, posiciones[0].Y].Ficha = new Caballo(ladoCoronacion);
-            casillas[posiciones[1].X, posiciones[1].Y].Ficha = new Torre(ladoCoronacion);
-            casillas[posiciones[2].X, posiciones[2].Y].Ficha = new Alfil(ladoCoronacion);
-            //añadir opciones a jugadas
-            jugadas.Add(peonCoronado);
-            jugadas.Add(posiciones[0]);
-            jugadas.Add(posiciones[1]);
-            jugadas.Add(posiciones[2]);
-        }
-        private Posicion PeonCoronando() {
-            foreach (CasillaModel casilla in casillas)
-                if (casilla.Ficha is Peon && (casilla.Pos.Y == 0 || casilla.Pos.Y == 7))
-                    return casilla.Pos;
-            return null;
-        }
-        public void ActualizarObservadores(SpriteBatch _spriteBatch) {    //dibujar todas las casillas
-            ActualizarObservadores();
+        public void ActualizarObservadores() {
+            observers.ForEach(o => o.OnNext(this));
             foreach (CasillaModel casilla in casillas)
                 casilla.ActualizarObservadores();
+        }
+        private int CalcularLadoActual() {
+            return (registro.Count == 0 || registro.Last().fichaOrigen.Lado == 1) ? 0 : 1;
+
         }
         private void ColocarPiezas() {
             //peones blancos
@@ -170,51 +119,61 @@ namespace AjedrezMonogame.Class.Model {
             //rey negro 
             casillas[4, 0].Ficha = new Rey(1);
         }
-        public void Seleccionar() { //FALTA CREAR UNA SOBRECARGA QUE RECIBA EL PUNTERO (Posicion) si se mete jugar con el raton
-            Seleccionar(puntero);
-        }
-        public void SeleccionarRaton(Posicion pos, bool normal = true) {
-            if (normal || !coronando) {
-                mostrarPuntero = false;
-                //ajustar posicion raton
-                Posicion posRaton = new Posicion(pos.X / (height / 8), pos.Y / (height / 8));
-                if (IsInside(posRaton))
-                    Seleccionar(posRaton);
+        private bool ComprobarJaque(int lado) { //actualiza la casilla del rey si esta en jaque y devuelve si el jugador tiene opciones para mover
+            if (IsInJaque(lado)) {
+                casillas[GetRey(lado).X, GetRey(lado).Y].Jugada = true;
             }
+            return JugadasPosibles(lado).Count == 0;
         }
-        public void Seleccionar(Posicion pos) { //FALTA CREAR UNA SOBRECARGA QUE RECIBA EL PUNTERO (Posicion) si se mete jugar con el raton
-            if (!coronando) {
-                //si hay seleccion
-                if (seleccion != null && jugadas.Exists((j) => pos.Equals(j))) { //si se apunta hacia una casilla que es una jugada
-                    puntero = pos.Clone;
-                    MoverPieza();   //mover la pieza seleecionada hacia la casilla apuntada
-                }
-                puntero = pos.Clone;
-                int ladoActual = CalcularLadoActual(); //lado de la ficha que le toca jugar
-                seleccion = pos.Clone;  //actualizar la seleccion (Posicion)
-                casillaSeleccion = casillas[seleccion.X, seleccion.Y];  //actualizar la casilla de seleccion
-                if (casillaSeleccion.Ficha == null ||               //si la casilla seleccionada esta vacia
-                    casillaSeleccion.Ficha.Lado != ladoActual) {    //o casilla seleccionada no es del color correspondiente
-                    QuitarSeleccion();
-                }
-            } else {    //se elige la pieza de coronacion
-                if (posiciones.ToList().Exists(p => p.Equals(pos)) ||   //la pieza seleccionada este en una de las posiciones guardadas
-                    pos.Equals(new Posicion(posiciones[0].X, posiciones[0].Y * 2 - posiciones[1].Y))) {   //la pieza seleccionada es la reina
-                    casillas[posiciones[0].X, posiciones[0].Y * 2 - posiciones[1].Y].Ficha = casillas[pos.X, pos.Y].Ficha;
-                    casillas[posiciones[0].X, posiciones[0].Y].Ficha = piezasActuales[0];
-                    casillas[posiciones[1].X, posiciones[1].Y].Ficha = piezasActuales[1];
-                    casillas[posiciones[2].X, posiciones[2].Y].Ficha = piezasActuales[2];
-                    coronando = false;
-                }
+        private bool ComprobarJaques() {    //devuelve true si ha finalizado la partida (jaque mate o ahogado)
+            if (!coronando)
+                return ComprobarJaque(CalcularLadoActual());
+            return false;
+        }
+        private void ElegirCoronacion() {
+            Posicion peonCoronado = PeonCoronando();
+            ladoCoronacion = 0;
+            //blancas
+            if (casillas[peonCoronado.X, peonCoronado.Y].Ficha.Lado == 0) {
+                //posiciones
+                posiciones[0] = new Posicion(peonCoronado.X, peonCoronado.Y + 1);
+                posiciones[1] = new Posicion(peonCoronado.X, peonCoronado.Y + 2);
+                posiciones[2] = new Posicion(peonCoronado.X, peonCoronado.Y + 3);
+                ladoCoronacion = 0;
+            } else {
+                //posiciones
+                posiciones[0] = new Posicion(peonCoronado.X, peonCoronado.Y - 1);
+                posiciones[1] = new Posicion(peonCoronado.X, peonCoronado.Y - 2);
+                posiciones[2] = new Posicion(peonCoronado.X, peonCoronado.Y - 3);
+                ladoCoronacion = 1;
             }
+            //guardar fichas actuales
+            piezasActuales[0] = casillas[posiciones[0].X, posiciones[0].Y].Ficha;
+            piezasActuales[1] = casillas[posiciones[1].X, posiciones[1].Y].Ficha;
+            piezasActuales[2] = casillas[posiciones[2].X, posiciones[2].Y].Ficha;
+            //Mostrar opciones
+            casillas[peonCoronado.X, peonCoronado.Y].Ficha = new Reina(ladoCoronacion);
+            casillas[posiciones[0].X, posiciones[0].Y].Ficha = new Caballo(ladoCoronacion);
+            casillas[posiciones[1].X, posiciones[1].Y].Ficha = new Torre(ladoCoronacion);
+            casillas[posiciones[2].X, posiciones[2].Y].Ficha = new Alfil(ladoCoronacion);
+            //añadir opciones a jugadas
+            jugadas.Add(peonCoronado);
+            jugadas.Add(posiciones[0]);
+            jugadas.Add(posiciones[1]);
+            jugadas.Add(posiciones[2]);
         }
-        private int CalcularLadoActual() {
-            return (registro.Count == 0 || registro.Last().fichaOrigen.Lado == 1) ? 0 : 1;
-
+        private Posicion GetRey(int lado) {
+            foreach (CasillaModel casilla in casillas)
+                if (!IsEnemy(casilla.Pos, lado) && casilla.Ficha is Rey)
+                    return casilla.Pos;
+            return null;
         }
-        public void QuitarSeleccion() {
-            seleccion = null;
-            casillaSeleccion = null;
+        private List<Posicion> JugadasPosibles(int lado) {
+            List<Posicion> jugadas = new List<Posicion>();
+            foreach (CasillaModel casilla in casillas)
+                if (IsEnemy(casilla.Pos, -lado + 1))
+                    jugadas.AddRange(casilla.Ficha.CalcularJugadas(this, casilla.Pos, true));
+            return jugadas;
         }
         private void MoverPieza() { //se puede llamar a la funion copia
             MoverPieza(puntero, seleccion);
@@ -252,40 +211,15 @@ namespace AjedrezMonogame.Class.Model {
             casillas[fin.X, fin.Y].Ficha = origen;
             casillas[ori.X, ori.Y].Ficha = null;
         }
-        private bool IsInside(Posicion pos) {
-            return pos.X >= 0 && pos.X <= 7 &&
-                pos.Y >= 0 && pos.Y <= 7;
-        }
-        public bool IsEmpty(Posicion pos) {
-            return IsInside(pos) && casillas[pos.X, pos.Y].Ficha == null;
-        }
-        public bool IsEnemy(Posicion pos, int lado) {
-            return IsInside(pos) && casillas[pos.X, pos.Y].Ficha != null &&
-            casillas[pos.X, pos.Y].Ficha.Lado != lado;
-        }
-        private List<Posicion> JugadasPosibles(int lado) {
-            List<Posicion> jugadas = new List<Posicion>();
+        private Posicion PeonCoronando() {
             foreach (CasillaModel casilla in casillas)
-                if (IsEnemy(casilla.Pos, -lado + 1))
-                    jugadas.AddRange(casilla.Ficha.CalcularJugadas(this, casilla.Pos, true));
-            return jugadas;
-        }
-        public bool IsAtacada(Posicion pos, int lado) {
-            List<Posicion> jugadas = new List<Posicion>();
-            foreach (CasillaModel casilla in casillas)
-                if (IsEnemy(casilla.Pos, lado))
-                    jugadas.AddRange(casilla.Ficha.CalcularJugadas(this, casilla.Pos, false));
-            //coger todas las jugadas de las casillas enemigas y comprobar que el rey no esta en ellas
-            return jugadas.Exists(j => j.Equals(pos));
-        }
-        public bool IsInJaque(int lado) {//sacar funcion
-            return IsAtacada(GetRey(lado), lado);
-        }
-        private Posicion GetRey(int lado) {
-            foreach (CasillaModel casilla in casillas)
-                if (!IsEnemy(casilla.Pos, lado) && casilla.Ficha is Rey)
+                if (casilla.Ficha is Peon && (casilla.Pos.Y == 0 || casilla.Pos.Y == 7))
                     return casilla.Pos;
             return null;
+        }
+        public void QuitarSeleccion() {
+            seleccion = null;
+            casillaSeleccion = null;
         }
         public void Retroceder() {
             if (!coronando && registro.Count > 0) {
@@ -312,12 +246,72 @@ namespace AjedrezMonogame.Class.Model {
                 }
             }
         }
-        public bool IsPeon(Posicion pos) {
-            return IsInside(pos) && casillas[pos.X, pos.Y].Ficha is Peon;
+        public void Seleccionar() { //FALTA CREAR UNA SOBRECARGA QUE RECIBA EL PUNTERO (Posicion) si se mete jugar con el raton
+            Seleccionar(puntero);
+        }
+        public void Seleccionar(Posicion pos) { //FALTA CREAR UNA SOBRECARGA QUE RECIBA EL PUNTERO (Posicion) si se mete jugar con el raton
+            if (!coronando) {
+                //si hay seleccion
+                if (seleccion != null && jugadas.Exists((j) => pos.Equals(j))) { //si se apunta hacia una casilla que es una jugada
+                    puntero = pos.Clone;
+                    MoverPieza();   //mover la pieza seleecionada hacia la casilla apuntada
+                }
+                puntero = pos.Clone;
+                int ladoActual = CalcularLadoActual(); //lado de la ficha que le toca jugar
+                seleccion = pos.Clone;  //actualizar la seleccion (Posicion)
+                casillaSeleccion = casillas[seleccion.X, seleccion.Y];  //actualizar la casilla de seleccion
+                if (casillaSeleccion.Ficha == null ||               //si la casilla seleccionada esta vacia
+                    casillaSeleccion.Ficha.Lado != ladoActual) {    //o casilla seleccionada no es del color correspondiente
+                    QuitarSeleccion();
+                }
+            } else {    //se elige la pieza de coronacion
+                if (posiciones.ToList().Exists(p => p.Equals(pos)) ||   //la pieza seleccionada este en una de las posiciones guardadas
+                    pos.Equals(new Posicion(posiciones[0].X, posiciones[0].Y * 2 - posiciones[1].Y))) {   //la pieza seleccionada es la reina
+                    casillas[posiciones[0].X, posiciones[0].Y * 2 - posiciones[1].Y].Ficha = casillas[pos.X, pos.Y].Ficha;
+                    casillas[posiciones[0].X, posiciones[0].Y].Ficha = piezasActuales[0];
+                    casillas[posiciones[1].X, posiciones[1].Y].Ficha = piezasActuales[1];
+                    casillas[posiciones[2].X, posiciones[2].Y].Ficha = piezasActuales[2];
+                    coronando = false;
+                }
+            }
+        }
+        public void SeleccionarRaton(Posicion pos, bool normal = true) {
+            if (normal || !coronando) {
+                mostrarPuntero = false;
+                //ajustar posicion raton
+                Posicion posRaton = new Posicion(pos.X / (height / 8), pos.Y / (height / 8));
+                if (IsInside(posRaton))
+                    Seleccionar(posRaton);
+            }
+        }
+        public bool IsAtacada(Posicion pos, int lado) {
+            List<Posicion> jugadas = new List<Posicion>();
+            foreach (CasillaModel casilla in casillas)
+                if (IsEnemy(casilla.Pos, lado))
+                    jugadas.AddRange(casilla.Ficha.CalcularJugadas(this, casilla.Pos, false));
+            //coger todas las jugadas de las casillas enemigas y comprobar que el rey no esta en ellas
+            return jugadas.Exists(j => j.Equals(pos));
+        }
+        public bool IsEmpty(Posicion pos) {
+            return IsInside(pos) && casillas[pos.X, pos.Y].Ficha == null;
+        }
+        public bool IsEnemy(Posicion pos, int lado) {
+            return IsInside(pos) && casillas[pos.X, pos.Y].Ficha != null &&
+            casillas[pos.X, pos.Y].Ficha.Lado != lado;
+        }
+        public bool IsInJaque(int lado) {//sacar funcion
+            return IsAtacada(GetRey(lado), lado);
+        }
+        private bool IsInside(Posicion pos) {
+            return pos.X >= 0 && pos.X <= 7 &&
+                pos.Y >= 0 && pos.Y <= 7;
         }
         public bool IsLastJugada(Posicion origen, Posicion final) {
             RegistroJugada registroJugada = registro.Last();
             return registroJugada.o.Equals(origen) && registroJugada.f.Equals(final);
+        }
+        public bool IsPeon(Posicion pos) {
+            return IsInside(pos) && casillas[pos.X, pos.Y].Ficha is Peon;
         }
         public bool WasMoved(Posicion pos) {
             return registro.Exists(r => r.o.Equals(pos));
@@ -345,10 +339,6 @@ namespace AjedrezMonogame.Class.Model {
             mostrarPuntero = true;
             if (puntero.X < 7 && !coronando)
                 puntero.X++;
-        }
-        public CasillaModel[,] GetCasillas() { return casillas; }
-        private void ActualizarObservadores() {
-            observers.ForEach(o => o.OnNext(this));
         }
         public IDisposable Subscribe(IObserver<TableroModel> observer) {
             if (!observers.Contains(observer)) {
