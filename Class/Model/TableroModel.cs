@@ -1,5 +1,6 @@
 ﻿using AjedrezMonogame.Class.Model.Piezas;
 using AjedrezMonogame.Structs;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -51,7 +52,12 @@ namespace AjedrezMonogame.Class.Model {
             ladoCoronacion = 0;
             height = graphicsDevice.Viewport.Height;
             this.puntero = puntero;
-            reloj = new RelojAjedrezModel(60000);
+            reloj = new RelojAjedrezModel(60000,
+                new Vector2[]{
+                    new Vector2(height+175, height - 250),  //Blancas
+                    new Vector2(height+175, 200)   //Negras
+                }
+            );
         }
         public TableroModel(GraphicsDevice graphicsDevice)
             : this(graphicsDevice, new Posicion()) { }
