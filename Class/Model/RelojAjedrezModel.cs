@@ -1,32 +1,28 @@
-﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
 
 namespace AjedrezMonogame.Class.Model {
-    internal class RelojAjedrezModel {
-        public float[] tiempoJugadores;
-        Vector2[] vectorJugadores;
-        public RelojAjedrezModel(float tiempo, Vector2[] vectorJugadores) {
+    internal class RelojAjedrezModel : IObservable<RelojAjedrezModel> {
+        List<IObserver<RelojAjedrezModel>> observers;
+        private float[] tiempoJugadores;
+        public float[] GetTiempoJugadores() { return tiempoJugadores; }
+        public RelojAjedrezModel(float tiempo) {
+            observers = new List<IObserver<RelojAjedrezModel>>();
             tiempoJugadores = new float[2];
             tiempoJugadores[0] = tiempo;
             tiempoJugadores[1] = tiempo;
-            this.vectorJugadores = vectorJugadores;
         }
         public void restarTiempo(float tiempoTranscurrido, int lado) {
             tiempoJugadores[lado] -= tiempoTranscurrido;
         }
-        public void Dedbug() {
-            Debug.WriteLine(tiempoJugadores[0] + "\t" + tiempoJugadores[1]);
+        public void ActualizarObservadores() {
+            observers.ForEach(o => o.OnNext(this));
         }
-        public void Draw(SpriteBatch _spriteBatch, SpriteFont font) {
-            DrawTiempoJugador(_spriteBatch, font, 0);
-            DrawTiempoJugador(_spriteBatch, font, 1);
-        }
-        public void DrawTiempoJugador(SpriteBatch _spriteBatch, SpriteFont font, int jugador) {
-            int minutos = (int)(tiempoJugadores[jugador] / (1000 * 60));
-            int segundos = (int)((tiempoJugadores[jugador] / 1000) % 60);
-            int milisegundos = (int)(tiempoJugadores[jugador] % 1000) / 10;
-            _spriteBatch.DrawString(font, string.Format("{0:00}:{1:00}:{2:00}", minutos, segundos, milisegundos), vectorJugadores[jugador], Color.Red);
+        public IDisposable Subscribe(IObserver<RelojAjedrezModel> observer) {
+            if (!observers.Contains(observer)) {
+                observers.Add(observer);
+            }
+            return new Unsubscriber<RelojAjedrezModel>(observers, observer);
         }
     }
 }

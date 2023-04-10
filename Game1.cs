@@ -47,15 +47,17 @@ namespace AjedrezMonogame {
 
         protected override void LoadContent() {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
+            int height = GraphicsDevice.Viewport.Height;
+            int width = GraphicsDevice.Viewport.Width;
 
             // TODO: use this.Content to load your game content here
             Texture2D tilesetTexture = Content.Load<Texture2D>("tilesetChess"); //GraphicsDevice.Viewport.Height / 8
                                                                                 // Crear una nueva textura con el tamaño deseado
-            Content.Load<SpriteFont>("Fonts\\Windows64");
+            SpriteFont font = Content.Load<SpriteFont>("Fonts\\Windows64");
 
 
-            int newWidth = (GraphicsDevice.Viewport.Height / 8) * 6;
-            int newHeight = (GraphicsDevice.Viewport.Height / 8) * 2;
+            int newWidth = (height / 8) * 6;
+            int newHeight = (height / 8) * 2;
             Texture2D resizedTexture = new Texture2D(GraphicsDevice, newWidth, newHeight);
 
             // Redimensionar los datos de la textura original al nuevo tamaño
@@ -76,8 +78,12 @@ namespace AjedrezMonogame {
             // Usar la nueva textura redimensionada
             tilesetTexture = resizedTexture;
 
-            tablero = new TableroModel(GraphicsDevice);
-            tableroView = new TableroView(GraphicsDevice, _spriteBatch, tilesetTexture, tablero.GetCasillas());
+            tablero = new TableroModel(height);
+            tableroView = new TableroView(GraphicsDevice, _spriteBatch, font, tilesetTexture, tablero,
+                new Vector2[]{
+                    new Vector2((height+width)/2, height - (200 + (int)font.MeasureString("00:00:00").Y)),  //Blancas
+                    new Vector2((height+width)/2, 200)   //Negras
+                }, height);
             tablero.Subscribe(tableroView);
             ratonPresionado = false;
         }
@@ -133,11 +139,9 @@ namespace AjedrezMonogame {
 
             _spriteBatch.Begin();
             tablero.ActualizarObservadores();
-            tablero.reloj.Draw(_spriteBatch, Content.Load<SpriteFont>("Fonts\\Windows64"));
             _spriteBatch.End();
 
             base.Draw(gameTime);
         }
-
     }
 }

@@ -15,7 +15,7 @@ namespace AjedrezMonogame.Class.View {
         SpriteBatch _spriteBatch;
 
         private Rectangle square;
-        public CasillaView(GraphicsDevice graphicsDevice, SpriteBatch _spriteBatch, int x, int y, int size, Color color, Texture2D tileset, CasillaModel casillaModel) {
+        public CasillaView(GraphicsDevice graphicsDevice, SpriteBatch _spriteBatch, int x, int y, int size, Color color, Texture2D tileset) {
 
             Color colorPuntero = Color.FromNonPremultiplied(20, 160, 20, 255);
             Color colorJugada = Color.FromNonPremultiplied(130, 200, 255, 175);
@@ -41,8 +41,6 @@ namespace AjedrezMonogame.Class.View {
 
             this.tileset = tileset;
             this._spriteBatch = _spriteBatch;
-
-            casillaModel.Subscribe(this);
         }
         public void Draw(CasillaModel model) {
             _spriteBatch.Draw(texture, square, Color.White);

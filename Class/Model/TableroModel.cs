@@ -1,7 +1,5 @@
 ﻿using AjedrezMonogame.Class.Model.Piezas;
 using AjedrezMonogame.Structs;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,7 +30,8 @@ namespace AjedrezMonogame.Class.Model {
         public RelojAjedrezModel reloj;
 
         public CasillaModel[,] GetCasillas() { return casillas; }
-        public TableroModel(GraphicsDevice graphicsDevice, Posicion puntero) {
+        public RelojAjedrezModel GetReloj() { return reloj; }
+        public TableroModel(Posicion puntero, int height) {
             observers = new List<IObserver<TableroModel>>();
             registro = new List<RegistroJugada>();
             piezasActuales = new Pieza[3];
@@ -50,21 +49,15 @@ namespace AjedrezMonogame.Class.Model {
             coronando = false;
             mostrarPuntero = false;
             ladoCoronacion = 0;
-            height = graphicsDevice.Viewport.Height;
+            this.height = height;
             this.puntero = puntero;
-            reloj = new RelojAjedrezModel(60000,
-                new Vector2[]{
-                    new Vector2(height+175, height - 250),  //Blancas
-                    new Vector2(height+175, 200)   //Negras
-                }
-            );
+            reloj = new RelojAjedrezModel(60000);
         }
-        public TableroModel(GraphicsDevice graphicsDevice)
-            : this(graphicsDevice, new Posicion()) { }
+        public TableroModel(int height)
+            : this(new Posicion(), height) { }
         public void Update(float tiempoTranscurrido) {
             if (registro.Count != 0)
                 reloj.restarTiempo(tiempoTranscurrido, CalcularLadoActual());
-            reloj.Dedbug();
             //GUARDAR JUGADAS DE LA CASILLA SELECCIONADA
             if (!coronando)
                 jugadas.Clear();    //vaciar las jugadas posibles
@@ -91,6 +84,7 @@ namespace AjedrezMonogame.Class.Model {
         }
         public void ActualizarObservadores() {
             observers.ForEach(o => o.OnNext(this));
+            reloj.ActualizarObservadores();
             foreach (CasillaModel casilla in casillas)
                 casilla.ActualizarObservadores();
         }
